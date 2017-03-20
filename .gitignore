@@ -1,0 +1,15 @@
+#Don't track autosave files
+*~
+
+#Don't track anything that starts with '#' or '.#'
+/#*
+.#*
+
+#Don't track build folders
+build/
+
+#Don't track compiled PLEXIL plans
+*.plx
+
+#Don't track shared objects (dynamic libraries)
+*.so
