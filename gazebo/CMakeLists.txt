@@ -6,5 +6,5 @@ include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
-add_executable(listener listener.cc)
-target_link_libraries(listener ${GAZEBO_LIBRARIES} pthread)
+add_executable(gazeboInterface gazeboInterface.cc)
+target_link_libraries(gazeboInterface ${GAZEBO_LIBRARIES} pthread)

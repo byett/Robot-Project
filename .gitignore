@@ -7,9 +7,7 @@
 
 #Don't track build folders
 build/
-
-#Don't track compiled PLEXIL plans
-*.plx
+*/build/
 
 #Don't track shared objects (dynamic libraries)
 *.so
