@@ -1,3 +1,12 @@
+/*****************************************************
+*	NetSocket.h
+*
+*	Class for using TCP and UDP sockets.
+*
+*	Author: Charles Hartsell
+*	Date:	3-31-17
+*****************************************************/
+
 #pragma once
 
 #include <WinSock2.h>
@@ -11,14 +20,25 @@
 public class NetSocket
 {
 public:
-	NetSocket(char* port, char* ip_address);
-	NetSocket(char* port);
-	NetSocket();
+	/* Public Functions */
+	NetSocket(char* port, char* ip_address, int socktype);
+	NetSocket(char* port, int socktype);
+	NetSocket(int socktype);
 	~NetSocket();
 	int openSocket();
+	int waitForConnection();
 	void* get_in_addr(struct sockaddr *sa);
 
+	/* Public Variables */
+
 private:
+	/* Private Functions */
+	int openUDPSocket();
+	int openTCPSocket();
+	int waitForConnectionUDP();
+	int waitForConnectionTCP();
+
+	/* Private Variables */
 	char name[MAX_NAME_SIZE];
 	int id, size_id, size_range;
 	double range;
@@ -29,7 +49,6 @@ private:
 	socklen_t addr_len;
 	struct addrinfo *servinfo, hints;
 	SOCKET socket_fd = INVALID_SOCKET;
-	WSADATA wsaData;
 	char buffer[MAX_DATA_SIZE];
 };
 
