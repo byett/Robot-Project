@@ -17,6 +17,24 @@ NetSocket::NetSocket(char* arg_port, char* arg_ip_address)
 	strcpy(ip_address, arg_ip_address);
 }
 
+NetSocket::NetSocket(char* arg_port)
+{
+	size_id = sizeof(id);
+	size_range = sizeof(range);
+	memset(&their_addr, 0, sizeof(their_addr));
+	strcpy(port, arg_port);
+	memset(ip_address, 0x00, sizeof(ip_address));
+	NetSocket();
+}
+
+NetSocket::NetSocket()
+{
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_PASSIVE;
+}
+
 NetSocket::~NetSocket()
 {
 	freeaddrinfo(servinfo);
@@ -27,14 +45,10 @@ int NetSocket::openSocket()
 {
 	// Taken from "Beej's Networking Guide"
 	int optval;
-	struct addrinfo hints, *p;
+	struct addrinfo *p;
 	int rv;
 	char s[INET6_ADDRSTRLEN], init_msg[8];
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_PASSIVE;
 	optval = 1;
 
 	if ((WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {

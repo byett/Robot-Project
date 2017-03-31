@@ -12,6 +12,8 @@ public class NetSocket
 {
 public:
 	NetSocket(char* port, char* ip_address);
+	NetSocket(char* port);
+	NetSocket();
 	~NetSocket();
 	int openSocket();
 	void* get_in_addr(struct sockaddr *sa);
@@ -25,7 +27,7 @@ private:
 	char port[INET6_ADDRSTRLEN], ip_address[INET6_ADDRSTRLEN];
 	struct sockaddr_storage their_addr;
 	socklen_t addr_len;
-	struct addrinfo *servinfo;
+	struct addrinfo *servinfo, hints;
 	SOCKET socket_fd = INVALID_SOCKET;
 	WSADATA wsaData;
 	char buffer[MAX_DATA_SIZE];
