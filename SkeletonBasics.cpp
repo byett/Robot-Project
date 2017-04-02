@@ -25,6 +25,12 @@ int forwarda = 0;
 int forwardb = 0;
 int backwarda = 0;
 int backwardb = 0;
+int autoa = 0;
+int autob = 0;
+int mana = 0;
+int manb = 0;
+double result = 0;
+int turncount = 0;
 
 static const float g_JointThickness = 3.0f;
 static const float g_TrackedBoneThickness = 6.0f;
@@ -60,6 +66,20 @@ CSkeletonBasics::CSkeletonBasics() :
     m_pNuiSensor(NULL)
 {
     ZeroMemory(m_Points,sizeof(m_Points));
+}
+
+void clearall() {
+	stop = 0;
+	forwarda = 0;
+	forwardb = 0;
+	backwarda = 0;
+	backwardb = 0;
+	autoa = 0;
+	autob = 0;
+	mana = 0;
+	manb = 0;
+	result = 0;
+	turncount = 0;
 }
 
 /// <summary>
@@ -574,37 +594,46 @@ void CSkeletonBasics::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 	const Vector4& le = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_LEFT];
 	const Vector4& rhip = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_RIGHT];
 	const Vector4& lhip = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_LEFT];
-	myfile << rh.x << "," << rh.y << ',' << lh.x << ',' << lh.y << ',' << rs.y << ',' << re.y << ',' << le.y << '\n';
+	//myfile << rh.x << "," << rh.y << ',' << lh.x << ',' << lh.y << ',' << rs.y << ',' << re.y << ',' << le.y << '\n';
 	if (rh.y>(rhip.y + 0) && lh.y>(lhip.y + 0) && rh.y!=lh.y) {
 		backwarda = 0;
 		backwardb = 0;
 		forwarda = 0;
 		forwardb = 0;
+		autoa = 0;
+		autob = 0;
+		mana = 0;
+		manb = 0;
 		stop = 0;
+		turncount++;
 		if (rh.x == lh.x) {
 			if (lh.y > rh.y) {
-				myfile << "90\n";
+				result += 90;
+				//myfile << "90\n";
 			}
 			else {
-				myfile << "-90\n";
+				result += -90;
+				//myfile << "-90\n";
 			}
 		}
 		else if (rh.x>lh.x) {
-			double result;
-			result = atan((lh.y - rh.y) / (rh.x - lh.x)) * 180 / PI;
+			result += atan((lh.y - rh.y) / (rh.x - lh.x)) * 180 / PI;
+			//myfile << result << "\n";
+		}
+		if (turncount == 10) {
+			result = result / 10;
 			myfile << result << "\n";
+			clearall();
 		}
 	}
-	if (rh.y > (rs.y + 0.1)) {
-		/*forwarda = 0;
+	if (rh.y > (rs.y + 0.15)) {
 		backwarda = 0;
-		forwardb = 0;
-		backwardb = 0;*/
-		if (stop == 5) {
-			stop = 0;
+		backwardb = 0;
+		if (stop == 10) {
+			clearall();
 			myfile << "stop\n";
 		}
-		else if (stop <= 4) {
+		else if (stop <= 9) {
 			stop++;
 		}
 	}
@@ -613,8 +642,7 @@ void CSkeletonBasics::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		backwardb = 0;
 		if (forwarda == 2) {
 			myfile << "forward\n";
-			forwarda = 0;
-			forwardb = 0;
+			clearall();
 		}
 		else {
 			forwardb=1;
@@ -631,10 +659,11 @@ void CSkeletonBasics::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 	if (lh.y < le.y && backwarda > 0) {
 		forwarda = 0;
 		forwardb = 0;
+		autoa = 0;
+		autob = 0;
 		if (backwarda == 2) {
 			myfile << "backward\n";
-			backwarda = 0;
-			backwardb = 0;
+			clearall();
 		}
 		else {
 			backwardb = 1;
@@ -646,6 +675,44 @@ void CSkeletonBasics::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		}
 		else {
 			backwarda=1;
+		}
+	}
+	if (lh.x > le.x && autoa > 0 && lh.y>lhip.y) {
+		mana = 0;
+		manb = 0;
+		if (autoa == 2) {
+			myfile << "auto\n";
+			clearall();
+		}
+		else {
+			autob = 1;
+		}
+	}
+	else if (lh.x < le.x && lh.y>lhip.y) {
+		if (autob == 1) {
+			autoa = 2;
+		}
+		else {
+			autoa = 1;
+		}
+	}
+	if (rh.x < re.x && mana > 0 && rh.y>rhip.y) {
+		autoa = 0;
+		autob = 0;
+		if (mana == 2) {
+			myfile << "manual\n";
+			clearall();
+		}
+		else {
+			manb = 1;
+		}
+	}
+	else if (rh.x > re.x && rh.y>rhip.y) {
+		if (manb == 1) {
+			mana = 2;
+		}
+		else {
+			mana = 1;
 		}
 	}
 	/*if (lh.y < le.y && backward==1) {
