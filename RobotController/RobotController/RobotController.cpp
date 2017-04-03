@@ -10,6 +10,7 @@
 ****************************************************************************/
 
 #include "NetSocket.h"
+#include "Gesture.h"
 
 #include "stdafx.h"
 
@@ -28,7 +29,7 @@
 #define REVERSE_CMD		0xB2
 #define TURN_CMD		0xB3
 
-int main(array<System::String ^> ^args)
+int main(/*array<System::String ^> ^args*/)
 {
 	WSADATA wsaData;
 	char buf[sizeof(int) + sizeof(double)];
@@ -41,6 +42,14 @@ int main(array<System::String ^> ^args)
 	if ((WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
 		printf("ERROR: WSAStartup failed.");
 		return -1;
+	}
+
+	Gesture* gesture = new Gesture();
+	gesture->CreateFirstConnected();
+
+	int i;
+	for (i = 0; i < 1; i++) {
+		gesture->Update();
 	}
 
 	NetSocket* UDP_Socket = new NetSocket(UDP_PORT, IP_ADDR, SOCK_DGRAM);

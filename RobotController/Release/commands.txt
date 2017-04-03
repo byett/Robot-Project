@@ -1,0 +1,4 @@
+stop
+backward
+auto
+manual
