@@ -35,8 +35,9 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#define PORT "18463"
-#define IP_ADDR "127.0.0.1"
+#define TCP_PORT "18424"
+#define UDP_PORT "18423"
+#define IP_ADDR "129.59.105.171"
 #define BACKLOG 10
 
 // Sensor ID's
@@ -55,19 +56,12 @@
 #define CMD_FAIL 0xBF
 
 // Global Socket ID. Bad idea, for testing only.
-int client_fd;
+int tcp_socket, udp_socket;
 struct addrinfo *servinfo;
 
 /////////////////////////////////////////////////////
 // Networking helper functions
 // Copied from "Beej's Networking Guide"
-void sigchld_handler(int s)
-{
-    // waitpid() might overwrite errno, so we save and restore it:
-    int saved_errno = errno;
-    while(waitpid(-1, NULL, WNOHANG) > 0);
-    errno = saved_errno;
-}
 
 // get sockaddr, IPv4 or IPv6:
 void* get_in_addr(struct sockaddr *sa)
@@ -78,42 +72,112 @@ void* get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int start_server()
+int connect_to_server_tcp()
 {
   // Open Communication Socket and wait for connection
   int sockfd;  // listen on sock_fd, new connection on new_fd
   struct addrinfo hints, *p;
   socklen_t sin_size;
-  struct sigaction sa;
-  int yes=1;
   int rv;
+  char s[INET6_ADDRSTRLEN];
 
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_DGRAM;
+  hints.ai_socktype = SOCK_STREAM;
 
-  if ((rv = getaddrinfo(IP_ADDR, PORT, &hints, &servinfo)) != 0) {
+  if ((rv = getaddrinfo(IP_ADDR, TCP_PORT, &hints, &servinfo)) != 0) {
       fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-      return 1;
+      return -1;
   }
 
   // loop through all the results and bind to the first we can
   for(p = servinfo; p != NULL; p = p->ai_next) {
-    if ((sockfd = socket(p->ai_family, p->ai_socktype,
-			 p->ai_protocol)) == -1) {
+    if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
       perror("server: socket");
       continue;
+    }
+
+    if(connect(sockfd, p->ai_addr, p->ai_addrlen) == -1){
+   	 close(sockfd);
+   	 perror("connect_to_server: connect");
+   	 continue;
     }
     break;
   }
   
   if (p == NULL){
     std::cout << "server: failed to bind" << std::endl;
-    exit(1);
+    return -1;;
   }
 
-  client_fd = sockfd;
-  return client_fd;
+  inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
+  printf("Connected TCP Socket to address %s\n", s);
+
+  freeaddrinfo(servinfo);
+
+  tcp_socket = sockfd;
+  return 0;
+}
+
+int connect_to_server_udp()
+{
+  // Open Communication Socket and wait for connection
+  int sockfd;  // listen on sock_fd, new connection on new_fd
+  struct addrinfo hints, *p;
+  socklen_t sin_size;
+  int rv;
+  char s[INET6_ADDRSTRLEN], init_msg[8];
+  struct sockaddr_storage their_addr;
+  socklen_t addr_len;
+
+  memset(init_msg, 1, sizeof init_msg);
+  memset(&hints, 0, sizeof hints);
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_DGRAM;
+
+  if ((rv = getaddrinfo(IP_ADDR, UDP_PORT, &hints, &servinfo)) != 0) {
+      fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+      return -1;
+  }
+
+  // loop through all the results and bind to the first we can
+  for(p = servinfo; p != NULL; p = p->ai_next) {
+    if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+      perror("server: socket");
+      continue;
+    }
+/*
+    if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1){
+   	 close(sockfd);
+   	 perror("listener: bind");
+   	 continue;
+    }
+*/
+    break;
+  }
+
+  if (p == NULL){
+    std::cout << "server: failed to bind" << std::endl;
+    return -1;;
+  }
+  servinfo = p;
+
+  inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
+  printf("Opened UDP Socket to address %s. Sending handshake message...\n", s);
+
+  sendto(sockfd, init_msg, sizeof(init_msg), NULL, servinfo->ai_addr, servinfo->ai_addrlen);
+
+  addr_len = sizeof(struct sockaddr);
+  memset(init_msg, 0, sizeof init_msg);
+  rv = recvfrom(sockfd, init_msg, sizeof(init_msg), NULL, (struct sockaddr*)&their_addr, &addr_len);
+  if( rv == -1 ){
+	  printf("UDP handshake error.\n");
+	  return -1;
+  }
+  printf("UDP received handshake.");
+
+  udp_socket = sockfd;
+  return 0;
 }
 
 int recvCmd(int *id, double *arg)
@@ -125,7 +189,7 @@ int recvCmd(int *id, double *arg)
 
   addr_len = sizeof(struct sockaddr);
   memset(&buf, 0, sizeof(buf));
-  status = recvfrom(client_fd, (void*)buf, sizeof(buf), MSG_DONTWAIT,
+  status = recvfrom(tcp_socket, (void*)buf, sizeof(buf), MSG_DONTWAIT,
 		    (struct sockaddr*)&their_addr, &addr_len);
 
   if(status == -1){
@@ -153,7 +217,7 @@ int recvCmd(int *id, double *arg)
 void cb_send(void* msg_buf, int msg_size)
 {
   int status;
-  status = sendto(client_fd, msg_buf, msg_size, 0, servinfo->ai_addr, servinfo->ai_addrlen);
+  status = sendto(tcp_socket, msg_buf, msg_size, 0, servinfo->ai_addr, servinfo->ai_addrlen);
   if(status == -1) std::cout << "Send Error. errno: " << errno << std::endl;
 }
 
@@ -247,7 +311,8 @@ int main(int _argc, char **_argv)
   velCmdPub->WaitForConnection();
 
   // Start UDP Server
-  start_server();
+  connect_to_server_tcp();
+  connect_to_server_udp();
   
   // Subscribe to Gazebo topics
   std::cout << "Starting topic subscribers...";
@@ -330,7 +395,7 @@ int main(int _argc, char **_argv)
   
 
   // Make sure to shut everything down.
-  close(client_fd);
+  close(tcp_socket);
   freeaddrinfo(servinfo);
   gazebo::client::shutdown();
 }
