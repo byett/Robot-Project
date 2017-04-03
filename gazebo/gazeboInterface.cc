@@ -174,7 +174,7 @@ int connect_to_server_udp()
 	  printf("UDP handshake error.\n");
 	  return -1;
   }
-  printf("UDP received handshake.");
+  printf("UDP received handshake.\n");
 
   udp_socket = sockfd;
   return 0;
@@ -189,8 +189,7 @@ int recvCmd(int *id, double *arg)
 
   addr_len = sizeof(struct sockaddr);
   memset(&buf, 0, sizeof(buf));
-  status = recvfrom(tcp_socket, (void*)buf, sizeof(buf), MSG_DONTWAIT,
-		    (struct sockaddr*)&their_addr, &addr_len);
+  status = recv(tcp_socket, (void*)buf, sizeof(buf), 0);
 
   if(status == -1){
     if( errno == EAGAIN || errno == EWOULDBLOCK ){
@@ -217,7 +216,7 @@ int recvCmd(int *id, double *arg)
 void cb_send(void* msg_buf, int msg_size)
 {
   int status;
-  status = sendto(tcp_socket, msg_buf, msg_size, 0, servinfo->ai_addr, servinfo->ai_addrlen);
+  status = sendto(udp_socket, msg_buf, msg_size, 0, servinfo->ai_addr, servinfo->ai_addrlen);
   if(status == -1) std::cout << "Send Error. errno: " << errno << std::endl;
 }
 
@@ -346,8 +345,8 @@ int main(int _argc, char **_argv)
     if(cmd_id > 0){
       switch(cmd_id){
       case FORWARD_CMD:
-	gazebo::msgs::Set(&msg, forward);
-	break;
+			gazebo::msgs::Set(&msg, forward);
+			break;
       case REVERSE_CMD:
 	gazebo::msgs::Set(&msg, reverse);
 	break;
@@ -396,6 +395,7 @@ int main(int _argc, char **_argv)
 
   // Make sure to shut everything down.
   close(tcp_socket);
+  close(udp_socket);
   freeaddrinfo(servinfo);
   gazebo::client::shutdown();
 }
