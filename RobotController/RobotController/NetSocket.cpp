@@ -136,6 +136,12 @@ int NetSocket::openTCPSocket()
 		}
 		if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof optval) == -1) {
 			printf("ERROR: Setsockopt error. WSA Error: %d\n", WSAGetLastError());
+			closesocket(socket_fd);
+			continue;
+		}
+		if (setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (char*)&optval, sizeof optval) == -1) {
+			printf("ERROR: Setsockopt TCP_NODELAY error. WSA Error: %d\n", WSAGetLastError());
+			closesocket(socket_fd);
 			continue;
 		}
 		if (bind(socket_fd, p->ai_addr, p->ai_addrlen) != 0) {
@@ -176,6 +182,7 @@ int NetSocket::waitForConnectionUDP()
 	int rv;
 
 	// Wait to receive initial message and store server address info. BLOCKING
+	memset(init_msg, 0, sizeof(init_msg));
 	printf("Waiting for UDP handshake on port %s...\n", port);
 	addr_len = sizeof(their_addr);
 	rv = recvfrom(socket_fd, init_msg, sizeof(init_msg), NULL, (struct sockaddr *)&their_addr, &addr_len);
@@ -187,7 +194,10 @@ int NetSocket::waitForConnectionUDP()
 	}
 		
 	inet_ntop(hints.ai_family, get_in_addr((struct sockaddr*)&their_addr), s, sizeof s);
-	printf("UDP handshake received from address: %s\n", s);
+	printf("UDP handshake received from address: %s\nSending handshake response message.\n", s);
+
+	memset(init_msg, 1, sizeof(init_msg));
+	sendto(socket_fd, init_msg, sizeof(init_msg), NULL, (struct sockaddr *)&their_addr, addr_len);
 
 	return 0;
 }
@@ -212,13 +222,27 @@ int NetSocket::waitForConnectionTCP()
 	}
 
 	/* Accepted client, stop listening for connections.*/
-	closesocket(socket_fd);
+	//closesocket(socket_fd);
 	socket_fd = temp_sock;
 
 	inet_ntop(hints.ai_family, get_in_addr((struct sockaddr*)&their_addr), s, sizeof s);
 	printf("TCP connection received from address: %s\n", s);
 
 	return 0;
+}
+
+int NetSocket::Send(char* msg, int msg_len)
+{
+	if (hints.ai_socktype == SOCK_DGRAM) {
+		return sendto(socket_fd, msg, msg_len, NULL, (struct sockaddr *)&their_addr, addr_len);
+	}
+	else if (hints.ai_socktype == SOCK_STREAM) {
+		return send(socket_fd, msg, msg_len, NULL);
+	}
+	else {
+		printf("ERROR: NetSocket::Send unsupported socket type (UDP and TCP supported).\n");
+		return -1;
+	}
 }
 
 // Networking Helper functions copied from "Beej's Networking Guide"

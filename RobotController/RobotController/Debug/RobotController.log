@@ -1,22 +1,4 @@
-﻿  NetSocket.cpp
-NetSocket.cpp(26): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\string.h(119): note: see declaration of 'strcpy'
-NetSocket.cpp(39): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\string.h(119): note: see declaration of 'strcpy'
-NetSocket.cpp(85): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'WCHAR *'
-  NetSocket.cpp(85): note: consider using '%ls' in the format string
-  NetSocket.cpp(85): note: consider using '%lls' in the format string
-  NetSocket.cpp(85): note: consider using '%Ls' in the format string
-  NetSocket.cpp(85): note: consider using '%ws' in the format string
-NetSocket.cpp(126): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'WCHAR *'
-  NetSocket.cpp(126): note: consider using '%ls' in the format string
-  NetSocket.cpp(126): note: consider using '%lls' in the format string
-  NetSocket.cpp(126): note: consider using '%Ls' in the format string
-  NetSocket.cpp(126): note: consider using '%ws' in the format string
-NetSocket.cpp(184): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'int'
-NetSocket.cpp(199): warning C4101: 'rv': unreferenced local variable
-  RobotController.cpp
-  Generating Code...
+﻿  RobotController.cpp
   NetSocket.obj : /DEBUG:FASTLINK is not supported when managed code is present; restarting link with /DEBUG:FULL
-  RobotController.vcxproj -> C:\Users\Charlie\Documents\Classes\Cyber Physical Systems\Robot-Project\RobotController\Debug\RobotController.exe
-  RobotController.vcxproj -> C:\Users\Charlie\Documents\Classes\Cyber Physical Systems\Robot-Project\RobotController\Debug\RobotController.pdb (Partial PDB)
+  RobotController.vcxproj -> C:\Users\hartseca\Documents\Classes\Cyber Physical Systems\Robot-Project\RobotController\Debug\RobotController.exe
+  RobotController.vcxproj -> C:\Users\hartseca\Documents\Classes\Cyber Physical Systems\Robot-Project\RobotController\Debug\RobotController.pdb (Partial PDB)

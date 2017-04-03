@@ -27,6 +27,7 @@ public:
 	~NetSocket();
 	int openSocket();
 	int waitForConnection();
+	int Send(char* msg, int msg_len);
 	void* get_in_addr(struct sockaddr *sa);
 
 	/* Public Variables */
