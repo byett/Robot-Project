@@ -163,18 +163,30 @@ int connect_to_server_udp()
   servinfo = p;
 
   inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
-  printf("Opened UDP Socket to address %s. Sending handshake message...\n", s);
+  printf("Opened UDP Socket to address %s.\n", s);
 
-  sendto(sockfd, init_msg, sizeof(init_msg), NULL, servinfo->ai_addr, servinfo->ai_addrlen);
+  while(1){
+    sleep(1);
+    printf("Sending handshake message...\n");
+    sendto(sockfd, init_msg, sizeof(init_msg), NULL, servinfo->ai_addr, servinfo->ai_addrlen);
 
-  addr_len = sizeof(struct sockaddr);
-  memset(init_msg, 0, sizeof init_msg);
-  rv = recvfrom(sockfd, init_msg, sizeof(init_msg), NULL, (struct sockaddr*)&their_addr, &addr_len);
-  if( rv == -1 ){
-	  printf("UDP handshake error.\n");
-	  return -1;
+    addr_len = sizeof(struct sockaddr);
+    memset(init_msg, 0, sizeof init_msg);
+    rv = recvfrom(sockfd, init_msg, sizeof(init_msg), MSG_DONTWAIT, (struct sockaddr*)&their_addr, &addr_len);
+    if( rv == -1 ){
+      if( (errno == EWOULDBLOCK) || (errno == EAGAIN) )
+	continue;
+      else{
+	printf("UDP handshake error.\n");
+	return -1;
+      }
+    }
+
+    else{
+      printf("UDP received handshake.\n");
+      break;
+    }
   }
-  printf("UDP received handshake.\n");
 
   udp_socket = sockfd;
   return 0;
