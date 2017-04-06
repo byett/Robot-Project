@@ -5,12 +5,12 @@
 *
 *	Author: Charles Hartsell
 *			Ben Yett
+*
 *	Date:	4-3-17
 *****************************************************/
 
 #pragma once
 
-#include "resource.h"
 #include <windows.h>
 #include <NuiApi.h>
 
@@ -20,6 +20,7 @@ public:
 	/* Public Functions */
 	Gesture();
 	~Gesture();
+	void Update();
 
 	/// <summary>
 	/// Create the first connected Kinect found 
@@ -27,21 +28,21 @@ public:
 	/// <returns>S_OK on success, otherwise failure code</returns>
 	HRESULT                 CreateFirstConnected();
 
-	/// <summary>
-	/// Handle new skeleton data
-	/// </summary>
-	void                    ProcessSkeleton();
-
-	// Gesture Recognition
-	void determine_gesture(const NUI_SKELETON_DATA & skeleton);
-
-	void Update();
-
 	/* Public Variables */
 
 private:
 	/* Private Functions */
 	void clearall();
+
+	/// <summary>
+	/// Handle new skeleton data
+	/// </summary>
+	void                    ProcessSkeleton();
+
+	/// <summary>
+	/// Gesture recognition using skeleton data
+	/// </summary>
+	void determine_gesture(const NUI_SKELETON_DATA & skeleton);
 	
 
 	/* Private Variables */

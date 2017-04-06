@@ -4,6 +4,7 @@
 *	Class for using TCP and UDP sockets.
 *
 *	Author: Charles Hartsell
+*
 *	Date:	3-31-17
 *****************************************************/
 
@@ -18,9 +19,7 @@
 #include <cerrno>
 
 NetSocket::NetSocket(char* arg_port, char* arg_ip_address, int socktype)
-{
-	size_id = sizeof(id);
-	size_range = sizeof(range);	
+{	
 	memset(&their_addr, 0, sizeof(their_addr));
 	memset(ip_address, 0, sizeof(ip_address));
 	strcpy(port, arg_port);
@@ -32,8 +31,6 @@ NetSocket::NetSocket(char* arg_port, char* arg_ip_address, int socktype)
 
 NetSocket::NetSocket(char* arg_port, int socktype)
 {
-	size_id = sizeof(id);
-	size_range = sizeof(range);
 	memset(&their_addr, 0, sizeof(their_addr));
 	memset(ip_address, 0, sizeof(ip_address));
 	strcpy(port, arg_port);
@@ -105,9 +102,10 @@ int NetSocket::openUDPSocket()
 		break;
 	}
 
+	freeaddrinfo(servinfo);
+
 	if (p == NULL) {
 		printf("Failed to open UDP socket.\n");
-		freeaddrinfo(servinfo);
 		return -1;
 	}
 	return 0;
@@ -152,7 +150,7 @@ int NetSocket::openTCPSocket()
 		break;
 	}
 
-	//freeaddrinfo(servinfo);
+	freeaddrinfo(servinfo);
 
 	if (p == NULL) {
 		printf("Failed to open TCP socket.\n");
@@ -184,8 +182,8 @@ int NetSocket::waitForConnectionUDP()
 	// Wait to receive initial message and store server address info. BLOCKING
 	memset(init_msg, 0, sizeof(init_msg));
 	printf("Waiting for UDP handshake on port %s...\n", port);
-	addr_len = sizeof(their_addr);
-	rv = recvfrom(socket_fd, init_msg, sizeof(init_msg), NULL, (struct sockaddr *)&their_addr, &addr_len);
+	client_addr_len = sizeof(client_addr);
+	rv = recvfrom(socket_fd, init_msg, sizeof(init_msg), NULL, (struct sockaddr *)&client_addr, &client_addr_len);
 
 	if (rv == SOCKET_ERROR) {
 		printf("ERROR: recvfrom error. WSAError: %s/n", WSAGetLastError());
@@ -193,11 +191,11 @@ int NetSocket::waitForConnectionUDP()
 		return -1;
 	}
 		
-	inet_ntop(hints.ai_family, get_in_addr((struct sockaddr*)&their_addr), s, sizeof s);
+	inet_ntop(hints.ai_family, get_in_addr((struct sockaddr*)&client_addr), s, sizeof s);
 	printf("UDP handshake received from address: %s\nSending handshake response message.\n", s);
 
 	memset(init_msg, 1, sizeof(init_msg));
-	sendto(socket_fd, init_msg, sizeof(init_msg), NULL, (struct sockaddr *)&their_addr, addr_len);
+	sendto(socket_fd, init_msg, sizeof(init_msg), NULL, (struct sockaddr *)&client_addr, client_addr_len);
 
 	return 0;
 }
@@ -214,18 +212,18 @@ int NetSocket::waitForConnectionTCP()
 	}
 
 	printf("Waiting for TCP connection on port %s...\n", port);
-	addr_len = sizeof(their_addr);
-	temp_sock = accept(socket_fd, (struct sockaddr *)&their_addr, &addr_len);
+	client_addr_len = sizeof(client_addr);
+	temp_sock = accept(socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 	if (temp_sock == -1) {
 		printf("ERROR: NetSocket::waitForConnectionTCP accept.\n");
 		return -1;
 	}
 
 	/* Accepted client, stop listening for connections.*/
-	//closesocket(socket_fd);
+	closesocket(socket_fd);
 	socket_fd = temp_sock;
 
-	inet_ntop(hints.ai_family, get_in_addr((struct sockaddr*)&their_addr), s, sizeof s);
+	inet_ntop(hints.ai_family, get_in_addr((struct sockaddr*)&client_addr), s, sizeof s);
 	printf("TCP connection received from address: %s\n", s);
 
 	return 0;
@@ -234,10 +232,29 @@ int NetSocket::waitForConnectionTCP()
 int NetSocket::Send(char* msg, int msg_len)
 {
 	if (hints.ai_socktype == SOCK_DGRAM) {
-		return sendto(socket_fd, msg, msg_len, NULL, (struct sockaddr *)&their_addr, addr_len);
+		return sendto(socket_fd, msg, msg_len, NULL, (struct sockaddr *)&client_addr, client_addr_len);
 	}
 	else if (hints.ai_socktype == SOCK_STREAM) {
 		return send(socket_fd, msg, msg_len, NULL);
+	}
+	else {
+		printf("ERROR: NetSocket::Send unsupported socket type (UDP and TCP supported).\n");
+		return -1;
+	}
+}
+
+int NetSocket::Recv(char* buf, int* buf_len)
+{
+	if (hints.ai_socktype == SOCK_DGRAM) {
+		addr_len = sizeof(their_addr);
+		*buf_len = recvfrom(socket_fd, buf, *buf_len, NULL, (struct sockaddr *)&their_addr, &addr_len);
+		if (*buf_len == SOCKET_ERROR) return -1;
+		else return 0;
+	}
+	else if (hints.ai_socktype == SOCK_STREAM) {
+		*buf_len = recv(socket_fd, buf, *buf_len, NULL);
+		if (*buf_len == SOCKET_ERROR) return -1;
+		else return 0;
 	}
 	else {
 		printf("ERROR: NetSocket::Send unsupported socket type (UDP and TCP supported).\n");

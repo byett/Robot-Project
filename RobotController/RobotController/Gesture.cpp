@@ -5,6 +5,7 @@
 *
 *	Author: Charles Hartsell
 *			Ben Yett
+*
 *	Date:	4-3-17
 *****************************************************/
 
@@ -12,7 +13,6 @@
 
 #include "Gesture.h"
 #include <strsafe.h>
-#include "resource.h"
 #include <math.h>
 #include <windows.h>
 #include <NuiApi.h>
@@ -23,6 +23,8 @@
 #include <fstream>
 
 #define PI 3.14159265
+
+#define WAIT_FOR_FRAME_TIME_MS	50
 
 Gesture::Gesture() :
 	m_pNuiSensor(NULL),
@@ -52,10 +54,9 @@ void Gesture::ProcessSkeleton()
 	HRESULT hr = m_pNuiSensor->NuiSkeletonGetNextFrame(0, &skeletonFrame);
 	if (FAILED(hr))
 	{
-		//printf("ProcessSkeleton failed.\n");
+		printf("ProcessSkeleton failed.\n");
 		return;
 	}
-	printf("ProcessSkeleton succeded.\n");
 
 	// smooth out the skeleton data
 	m_pNuiSensor->NuiTransformSmooth(&skeletonFrame, NULL);
@@ -74,7 +75,7 @@ void Gesture::Update()
 	}
 
 	// Wait for 0ms, just quickly test if it is time to process a skeleton
-	if (WAIT_OBJECT_0 == WaitForSingleObject(m_hNextSkeletonEvent, 100))
+	if (WAIT_OBJECT_0 == WaitForSingleObject(m_hNextSkeletonEvent, WAIT_FOR_FRAME_TIME_MS))
 	{
 		ProcessSkeleton();
 	}
