@@ -10,6 +10,8 @@
 
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 
+#define PI 3.14159265
+
 // Windows Header Files
 #include <windows.h>
 #include <tchar.h>

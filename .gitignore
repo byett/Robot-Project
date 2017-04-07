@@ -9,5 +9,13 @@
 build/
 */build/
 
+# Don't track Visual Studio builds
+RobotController/Debug/
+RobotController/Release/
+RobotController/x64/
+RobotController/RobotController/Debug/
+RobotController/RobotController/Release/
+RobotController/RobotController/x64/
+
 #Don't track shared objects (dynamic libraries)
 *.so

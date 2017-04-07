@@ -1,5 +1,0 @@
-﻿  RobotController.cpp
-RobotController.cpp(73): warning C4101: 'rv': unreferenced local variable
-  NetSocket.obj : /DEBUG:FASTLINK is not supported when managed code is present; restarting link with /DEBUG:FULL
-  RobotController.vcxproj -> C:\Users\hartseca\Documents\Classes\Cyber Physical Systems\Robot-Project\RobotController\Debug\RobotController.exe
-  RobotController.vcxproj -> C:\Users\hartseca\Documents\Classes\Cyber Physical Systems\Robot-Project\RobotController\Debug\RobotController.pdb (Partial PDB)

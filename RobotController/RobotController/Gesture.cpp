@@ -22,8 +22,6 @@
 #include <string>
 #include <fstream>
 
-#define PI 3.14159265
-
 #define WAIT_FOR_FRAME_TIME_MS	50
 
 Gesture::Gesture() :

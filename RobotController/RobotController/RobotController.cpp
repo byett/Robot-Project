@@ -13,6 +13,8 @@
 
 #include "NetSocket.h"
 #include "Gesture.h"
+#include "StateMachine.h"
+#include "GazeboDefs.h"
 
 #include "stdafx.h"
 
@@ -20,24 +22,8 @@
 #define TCP_PORT "18424"
 #define IP_ADDR "129.59.105.171"
 
-#define	GAZEBO_SENSOR_COUNT		5
-#define GAZEBO_SENSOR_BASE		0xA0
-#define WALL_ID					0xA0
-#define LEFT_ID					0xA1
-#define LEFTFRONT_ID			0xA2
-#define RIGHT_ID				0xA3
-#define RIGHTFRONT_ID			0xA4
-
-#define STOP_CMD		0xB0
-#define FORWARD_CMD		0xB1
-#define REVERSE_CMD		0xB2
-#define TURN_CMD		0xB3
-
 #define MUTEX_WAIT_TIMEOUT_MS		500
 #define THREAD_WAIT_TIMEOUT_MS		500
-
-#define GAZEBO_DATA_MSG_SIZE	sizeof(int) + sizeof(double)
-#define	GAZEBO_CMD_MSG_SIZE		sizeof(int) + sizeof(double)
 
 typedef struct {
 	bool	threadShutdown;
@@ -46,10 +32,6 @@ typedef struct {
 	char	*msg_p;
 	HANDLE	mutex;
 }threadSharedItems;
-
-typedef struct {
-	double	sensor_ranges[GAZEBO_SENSOR_COUNT];
-}gazeboSensorData;
 
 /* Gesture recognition thread function declaration */
 DWORD WINAPI gestureThreadFunction(LPVOID lpParam);

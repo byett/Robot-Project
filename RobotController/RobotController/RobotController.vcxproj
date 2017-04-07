@@ -130,10 +130,13 @@
     <ClCompile Include="NetSocket.cpp" />
     <ClCompile Include="RobotController.cpp" />
     <ClCompile Include="Gesture.cpp" />
+    <ClCompile Include="StateMachine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Gesture.h" />
+    <ClInclude Include="GazeboDefs.h" />
     <ClInclude Include="NetSocket.h" />
+    <ClInclude Include="StateMachine.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
