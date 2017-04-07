@@ -9,11 +9,15 @@
 #define RIGHT_ID				0xA3
 #define RIGHTFRONT_ID			0xA4
 
-/* Gazebo Command ID's */
-#define STOP_CMD		0xB0
-#define FORWARD_CMD		0xB1
-#define REVERSE_CMD		0xB2
-#define TURN_CMD		0xB3
+/* Gazebo/User command ID's */
+#define NULL_CMD			0xB0
+#define STOP_CMD			0xB1
+#define FORWARD_CMD			0xB2
+#define REVERSE_CMD			0xB3
+#define TURN_L_CMD			0xB4
+#define TURN_R_CMD			0xB5
+#define MANUAL_MODE			0xB6
+#define AUTO_MODE			0xB7
 
 #define GAZEBO_DATA_MSG_SIZE	sizeof(int) + sizeof(double)
 #define	GAZEBO_CMD_MSG_SIZE		sizeof(int) + sizeof(double)

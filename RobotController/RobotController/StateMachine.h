@@ -24,16 +24,6 @@
 #define REVERSE_L_STATE		0x08
 #define REVERSE_R_STATE		0x09
 
-/* User command ID's */
-#define NULL_CMD			0xB0
-#define STOP_CMD			0xB1
-#define FORWARD_CMD			0xB2
-#define REVERSE_CMD			0xB3
-#define TURN_L_CMD			0xB4
-#define TURN_R_CMD			0xB5
-#define MANUAL_MODE			0xB6
-#define AUTO_MODE			0xB7
-
 public class StateMachine 
 {
 public:

@@ -52,7 +52,7 @@ int main(/*array<System::String ^> ^args*/)
 	gazeboSensorData	sensorData;
 
 	char		buf[sizeof(int) + sizeof(double)];
-	int			cmd_id, rv;
+	int			cmd_id;
 	double		arg;
 
 	/* Allocate and initilize memory */
