@@ -25,7 +25,7 @@
 #define MUTEX_WAIT_TIMEOUT_MS		500
 #define THREAD_WAIT_TIMEOUT_MS		500
 
-typedef struct {
+typedef struct threadSharedItems{
 	bool	threadShutdown;
 	bool	new_msg;
 	int		msg_len;
