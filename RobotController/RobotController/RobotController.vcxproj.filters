@@ -44,5 +44,8 @@
     <ClInclude Include="GazeboDefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="StateMachineDefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

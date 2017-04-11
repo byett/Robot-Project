@@ -21,6 +21,8 @@ public:
 	Gesture();
 	~Gesture();
 	void Update();
+	int getUserInput();
+	double getUserArg();
 
 	/// <summary>
 	/// Create the first connected Kinect found 
@@ -47,7 +49,8 @@ private:
 
 	/* Private Variables */
 	int stop, forwarda, forwardb, backwarda, backwardb, autoa, autob, mana, manb, turncount;
-	double result;
+	int user_input;
+	double user_arg, result;
 
 	INuiSensor*             m_pNuiSensor;
 

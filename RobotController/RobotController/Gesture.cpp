@@ -12,6 +12,7 @@
 #include "stdafx.h"
 
 #include "Gesture.h"
+#include "StateMachineDefs.h"
 #include <strsafe.h>
 #include <math.h>
 #include <windows.h>
@@ -30,6 +31,8 @@ Gesture::Gesture() :
 	m_pSkeletonStreamHandle(INVALID_HANDLE_VALUE)
 {
 	clearall();
+	user_input = NULL_CMD_MASK;
+	user_arg = 0.0;
 }
 
 Gesture::~Gesture()
@@ -43,6 +46,19 @@ Gesture::~Gesture()
 	{
 		CloseHandle(m_hNextSkeletonEvent);
 	}
+}
+
+/* Basic functions for external access to private variables 
+ *  NOTE:	The values of user_input and user_arg are reset each time determine_gesture() function is called
+ *			These values should be read after every call of Update() before calling Update() again to ensure no input is missed. 		 
+ */
+int Gesture::getUserInput()
+{
+	return user_input;
+}
+double Gesture::getUserArg()
+{
+	return user_arg;
 }
 
 void Gesture::ProcessSkeleton()
@@ -72,7 +88,7 @@ void Gesture::Update()
 		return;
 	}
 
-	// Wait for 0ms, just quickly test if it is time to process a skeleton
+	/* Wait for new frame to become available from Kinect. Timeout: WAIT_FOR_FRAME_TIME_MS */
 	if (WAIT_OBJECT_0 == WaitForSingleObject(m_hNextSkeletonEvent, WAIT_FOR_FRAME_TIME_MS))
 	{
 		ProcessSkeleton();
@@ -81,9 +97,7 @@ void Gesture::Update()
 
 void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 {
-	Sleep(20);
-	std::ofstream myfile;
-	myfile.open("commands.txt", std::ofstream::app);
+	/* Extract desired skeleton data from argument struct */
 	const Vector4& rh = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_RIGHT];
 	const Vector4& lh = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HAND_LEFT];
 	const Vector4& rs = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
@@ -91,7 +105,12 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 	const Vector4& le = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_LEFT];
 	const Vector4& rhip = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_RIGHT];
 	const Vector4& lhip = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_LEFT];
-	//myfile << rh.x << "," << rh.y << ',' << lh.x << ',' << lh.y << ',' << rs.y << ',' << re.y << ',' << le.y << '\n';
+	
+	/* Clear any previous user_input and user_arg */
+	user_input = NULL_CMD_MASK;
+	user_arg = 0.0;
+
+	/* Determine gesture and set user_input and user_arg as appropriate */
 	if (rh.y>(rhip.y + 0) && lh.y>(lhip.y + 0) && rh.y != lh.y) {
 		backwarda = 0;
 		backwardb = 0;
@@ -106,20 +125,18 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		if (rh.x == lh.x) {
 			if (lh.y > rh.y) {
 				result += 90;
-				//myfile << "90\n";
 			}
 			else {
 				result += -90;
-				//myfile << "-90\n";
 			}
 		}
 		else if (rh.x>lh.x) {
 			result += atan((lh.y - rh.y) / (rh.x - lh.x)) * 180 / PI;
-			//myfile << result << "\n";
 		}
 		if (turncount == 10) {
-			result = result / 10;
-			myfile << result << "\n";
+			user_arg = result / 10;
+			if(user_arg > 0) user_input = TURN_R_CMD_MASK;
+			else user_input = TURN_L_CMD_MASK;
 			clearall();
 		}
 	}
@@ -128,7 +145,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		backwardb = 0;
 		if (stop == 10) {
 			clearall();
-			myfile << "stop\n";
+			user_input = STOP_CMD_MASK;
 		}
 		else if (stop <= 9) {
 			stop++;
@@ -138,7 +155,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		backwarda = 0;
 		backwardb = 0;
 		if (forwarda == 2) {
-			myfile << "forward\n";
+			user_input = FORWARD_CMD_MASK;
 			clearall();
 		}
 		else {
@@ -159,7 +176,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		autoa = 0;
 		autob = 0;
 		if (backwarda == 2) {
-			myfile << "backward\n";
+			user_input = REVERSE_CMD_MASK;
 			clearall();
 		}
 		else {
@@ -178,7 +195,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		mana = 0;
 		manb = 0;
 		if (autoa == 2) {
-			myfile << "auto\n";
+			user_input = AUTO_MODE_CMD_MASK;
 			clearall();
 		}
 		else {
@@ -197,7 +214,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		autoa = 0;
 		autob = 0;
 		if (mana == 2) {
-			myfile << "manual\n";
+			user_input = MANUAL_MODE_CMD_MASK;
 			clearall();
 		}
 		else {
@@ -223,7 +240,6 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 	backward++;
 	//Sleep(500);
 	}*/
-	myfile.close();
 }
 
 /// <summary>

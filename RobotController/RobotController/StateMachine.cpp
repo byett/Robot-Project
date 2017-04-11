@@ -10,78 +10,119 @@
 
 #include "StateMachine.h"
 
-#include <string>
-
 StateMachine::StateMachine()
 {
 	/* Initial FSM State */
 	currentState = STOP_STATE;
 	machineMode = AUTO_MODE;
-
-	/* Variable Initilizations */
-	latestUserCmd = NULL_CMD;
 	outputCmd = NULL_CMD;
-	userCmdArg = 0.0;
-	outputCmdArg = 0.0;
-	memset(&sensorData, 0x00, sizeof(sensorData));
+	tickCount = 0;
 }
 
 int StateMachine::getCurrentState()
 {
-	return (this->currentState);
+	return currentState;
 }
 
-void StateMachine::sensorUpdate(int id, double value)
+void StateMachine::setInput(uint16_t input)
 {
-	sensorData.sensor_ranges[id % GAZEBO_SENSOR_BASE] = value;
+	externalInput = input;
 }
 
-void StateMachine::sensorUpdateAll(gazeboSensorData newData)
+int StateMachine::getOutputCmd()
 {
-	sensorData = newData;
-}
+	int temp;
 
-void StateMachine::userCmd(int id, double arg)
-{
-	if (id == MANUAL_MODE) machineMode = MANUAL_MODE;
-	else if (id == AUTO_MODE) machineMode = AUTO_MODE;
-	else {
-		latestUserCmd = id;
-		userCmdArg = arg;
-	}
-}
-
-int StateMachine::getOutputCmd(int* id, double* arg)
-{
-	if (outputCmd == NULL_CMD) return -1;
-
-	*id = outputCmd;
-	*arg = outputCmdArg;
+	temp = outputCmd;
 	outputCmd = NULL_CMD;
-	outputCmdArg = 0.0;
 
-	return 0;
+	return temp;
 }
 
 int StateMachine::stepMachine()
 {
 	/*	State machine behavior defined in MATLAB Simulink file 
-	 *	Current located at $ROBOT_PROJECT_HOME/fsm_for_robot_project.slx
-	 *	Evaluated starting with highest level of Heirarchy, then moving down
+	 *	Current located at $ROBOT_PROJECT_HOME/cps.slx
 	 */
 
-	/* Top-level of Hierarchy */
+	tickCount++;
 	switch (machineMode) {
+
+	/* Manual Mode */
 	case MANUAL_MODE:
-		if (latestUserCmd == AUTO_MODE) {
+		if (externalInput & AUTO_MODE_CMD_MASK) {
 			machineMode = AUTO_MODE;
-			currentState = STOP_STATE;
+			currentState = AUTO_FORWARD_STATE;
+			outputCmd = FORWARD_CMD;
+		}
+		else {
+			switch (currentState) {
+
+			}
 		}
 		break;
+
+	/* Autonomous Mode */
 	case AUTO_MODE:
-		if (latestUserCmd == MANUAL_MODE) {
+		if (externalInput & MANUAL_MODE_CMD_MASK) {
 			machineMode = MANUAL_MODE;
 			currentState = STOP_STATE;
+			outputCmd = STOP_CMD;
+		}
+		else {
+			switch (currentState) {
+			case AUTO_FORWARD_STATE:
+				if (externalInput & (WALL_SENSOR_MASK | LEFT_SENSOR_MASK | RIGHT_SENSOR_MASK)) {
+					if (externalInput & LEFT_SENSOR_MASK) left_sensor_tripped = true;
+					currentState = AUTO_REVERSE_STATE;
+					outputCmd = REVERSE_CMD;
+					tickCount = 0;
+				}
+				else outputCmd = FORWARD_CMD;
+				break;
+			case AUTO_REVERSE_STATE:
+				if (tickCount >= AUTO_AVOIDANCE_REVERSE_DELAY_TICKS ) {
+					if (left_sensor_tripped) {
+						currentState = AUTO_TURN_L_STATE;
+						outputCmd = TURN_L_CMD;
+						left_sensor_tripped = false;
+					}
+					else
+					{
+						currentState = AUTO_TURN_R_STATE;
+						outputCmd = TURN_R_CMD;
+					}
+					tickCount = 0;
+				}
+				else outputCmd = REVERSE_CMD;
+				break;
+			case AUTO_TURN_L_STATE:
+				if (tickCount >= AUTO_AVOIDANCE_TURN_DELAY_TICKS) {
+					if (externalInput & (WALL_SENSOR_MASK | LEFT_SENSOR_MASK | RIGHT_SENSOR_MASK)) {
+						currentState = AUTO_REVERSE_STATE;
+						outputCmd = REVERSE_CMD;
+					}
+					else {
+						currentState = AUTO_FORWARD_STATE;
+						outputCmd = FORWARD_CMD;
+					}
+				}
+				else outputCmd = TURN_L_CMD;
+				break;
+			case AUTO_TURN_R_STATE:
+				if (tickCount >= AUTO_AVOIDANCE_TURN_DELAY_TICKS) {
+					if (externalInput & (WALL_SENSOR_MASK | LEFT_SENSOR_MASK | RIGHT_SENSOR_MASK)) {
+						currentState = AUTO_REVERSE_STATE;
+						outputCmd = REVERSE_CMD;
+					}
+					else {
+						currentState = AUTO_FORWARD_STATE;
+						outputCmd = FORWARD_CMD;
+					}
+				}
+				else outputCmd = TURN_R_CMD;
+				break;
+			}
 		}
 		break;
 	default:

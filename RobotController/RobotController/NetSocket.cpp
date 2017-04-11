@@ -21,7 +21,7 @@
 NetSocket::NetSocket(char* arg_port, char* arg_ip_address, int socktype)
 {	
 	memset(&their_addr, 0, sizeof(their_addr));
-	memset(ip_address, 0, sizeof(ip_address));
+	strcpy(ip_address, arg_ip_address);
 	strcpy(port, arg_port);
 
 	memset(&hints, 0, sizeof(hints));
@@ -99,6 +99,8 @@ int NetSocket::openUDPSocket()
 			printf("ERROR: Bind error. WSA Error: %d\n", WSAGetLastError());
 			continue;
 		}
+		/* Store IP address of opened socket. Should be IP of self */
+		inet_ntop(hints.ai_family, get_in_addr((struct sockaddr*)(p->ai_addr)), ip_address, sizeof ip_address);
 		break;
 	}
 
@@ -147,6 +149,8 @@ int NetSocket::openTCPSocket()
 			printf("ERROR: Bind error. WSA Error: %d\n", WSAGetLastError());
 			continue;
 		}
+		/* Store IP address of opened socket. Should be IP of self */
+		inet_ntop(hints.ai_family, get_in_addr((struct sockaddr*)(p->ai_addr)), ip_address, sizeof ip_address);
 		break;
 	}
 
@@ -181,7 +185,7 @@ int NetSocket::waitForConnectionUDP()
 
 	// Wait to receive initial message and store server address info. BLOCKING
 	memset(init_msg, 0, sizeof(init_msg));
-	printf("Waiting for UDP handshake on port %s...\n", port);
+	printf("Waiting for UDP handshake on address: %s   port: %s...\n", ip_address, port);
 	client_addr_len = sizeof(client_addr);
 	rv = recvfrom(socket_fd, init_msg, sizeof(init_msg), NULL, (struct sockaddr *)&client_addr, &client_addr_len);
 
@@ -211,7 +215,7 @@ int NetSocket::waitForConnectionTCP()
 		return -1;
 	}
 
-	printf("Waiting for TCP connection on port %s...\n", port);
+	printf("Waiting for TCP connection on address: %s   port: %s...\n", ip_address, port);
 	client_addr_len = sizeof(client_addr);
 	temp_sock = accept(socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 	if (temp_sock == -1) {
