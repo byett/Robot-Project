@@ -37,7 +37,7 @@
 
 #define TCP_PORT "18424"
 #define UDP_PORT "18423"
-#define IP_ADDR "129.59.105.171"
+#define IP_ADDR "129.59.105.33"
 #define BACKLOG 10
 
 // Sensor ID's

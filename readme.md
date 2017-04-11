@@ -27,4 +27,4 @@ Run with "gazebo test_world.sdf" at terminal line once Gazebo has been installed
 
 gazeboInterface provides UDP and TCP sockets for RobotController to communicate with Gazebo.
 Can be built with ./buildInterface.sh and then run with ./runInterface.sh.
-Building requires CMake, Make, and gcc.
+Building requires CMake, Make, gcc, and g++.
