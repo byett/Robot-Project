@@ -41,9 +41,10 @@ int StateMachine::getOutputCmd()
 
 int StateMachine::stepMachine()
 {
-	/*	State machine behavior defined in MATLAB Simulink file 
-	 *	Current located at $ROBOT_PROJECT_HOME/cps.slx
-	 *	For Manual mode of operation, the mid-level hierarchy is evaluated before the bottom-level
+	/*	State machine behavior defined in MATLAB Simulink file.
+	 *	Currently located at $ROBOT_PROJECT_HOME/cps.slx
+	 *	For Manual mode of operation, the mid-level hierarchy is evaluated before the bottom-level.
+	 *	This is a very tedious and ugly way to implement an FSM.
 	 */
 
 	tickCount++;
@@ -61,6 +62,7 @@ int StateMachine::stepMachine()
 		else {
 			/* Mid-level of Hierarchy */
 			if (externalInput & (WALL_SENSOR_MASK | LEFT_SENSOR_MASK | RIGHT_SENSOR_MASK)) {
+				printf("Obstacle Detected.\n");
 				currentState = AVOID_OBSTACLE_STATE;
 				outputCmd = REVERSE_CMD;
 				break;
@@ -108,8 +110,9 @@ int StateMachine::stepMachine()
 					outputCmd = STOP_CMD;
 				}
 				else outputCmd = REVERSE_CMD;
+				break;
 			default:
-				printf("ERROR: Unknown FSM State.\n");
+				printf("ERROR: Unknown FSM State %d. Manual Mid-Level.\n", currentState);
 				return -1;
 			}
 
@@ -183,6 +186,7 @@ int StateMachine::stepMachine()
 					outputCmd = FORWARD_L_CMD;
 				}
 				else outputCmd = FORWARD_R_CMD;
+				break;
 			case REVERSE_STATE:
 				if (externalInput & TURN_L_CMD_MASK) {
 					currentState = REVERSE_L_STATE;
@@ -204,6 +208,7 @@ int StateMachine::stepMachine()
 					outputCmd = REVERSE_R_CMD;
 				}
 				else outputCmd = REVERSE_L_CMD;
+				break;
 			case REVERSE_R_STATE:
 				if (externalInput & (REVERSE_CMD_MASK | STOP_TURN_CMD_MASK)) {
 					currentState = REVERSE_STATE;
@@ -214,8 +219,9 @@ int StateMachine::stepMachine()
 					outputCmd = REVERSE_L_CMD;
 				}
 				else outputCmd = REVERSE_R_CMD;
+				break;
 			default:
-				printf("ERROR: Unknown FSM state.\n");
+				printf("ERROR: Unknown FSM State %d. Manual Bottom-Level.\n", currentState);
 				return -1;
 			}
 		}
@@ -281,6 +287,9 @@ int StateMachine::stepMachine()
 				}
 				else outputCmd = TURN_R_CMD;
 				break;
+			default:
+				printf("ERROR: Unknown FSM State %d. Auto mode.\n", currentState);
+				return -1;
 			}
 		}
 		break;

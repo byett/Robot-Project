@@ -46,6 +46,7 @@ DWORD WINAPI listenThreadFunction(LPVOID lpParam);
 
 /* Helper functions */
 int shutdownThread(HANDLE thread, threadSharedItems *t_items);
+uint16_t DEBUG_GetUserInputCMDLine();
 
 
 int main(/*array<System::String ^> ^args*/)
@@ -155,7 +156,7 @@ int main(/*array<System::String ^> ^args*/)
 		listenerShared->new_msg = FALSE;
 		ReleaseMutex(listenerShared->mutex);
 
-		/* Lock mutex on gesture shared data and read latest data update */
+		/* Lock mutex on gesture shared data and read latest user input */
 		WaitForSingleObject(gestureShared->mutex, INFINITE);
 		if (gestureShared->new_msg == TRUE) {
 			machineInput |= ((gestureData*)(gestureShared->msg_p))->user_cmd;
@@ -163,6 +164,9 @@ int main(/*array<System::String ^> ^args*/)
 		}
 		gestureShared->new_msg = FALSE;
 		ReleaseMutex(gestureShared->mutex);
+
+		/* DEBUG: Get user input from command line */
+		machineInput |= DEBUG_GetUserInputCMDLine();
 
 		/* Send input to FSM, step, and get output */
 		FSM->setInput(machineInput);
@@ -258,6 +262,7 @@ DWORD WINAPI listenThreadFunction(LPVOID lpParam)
 
 	listenerShared = (threadSharedItems*)lpParam;
 	threadShutdown = FALSE;
+	memset(&sensorData, 0x00, sizeof(sensorData));
 
 	/* Open UDP Socket for listening to Gazebo data messages */
 	NetSocket* UDP_Socket = new NetSocket(UDP_PORT, SOCK_DGRAM);
@@ -360,4 +365,16 @@ int shutdownThread(HANDLE thread, threadSharedItems *t_items)
 	CloseHandle(thread);
 
 	return rv;
+}
+
+uint16_t DEBUG_GetUserInputCMDLine()
+{
+	char buf[10];
+	uint16_t input;
+
+	printf("User Input: ");
+	std::cin.getline(buf, 10);
+	input = atoi(buf);
+
+	return input;
 }
