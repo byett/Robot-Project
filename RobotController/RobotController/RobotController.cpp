@@ -50,15 +50,18 @@ int shutdownThread(HANDLE thread, threadSharedItems *t_items);
 
 int main(/*array<System::String ^> ^args*/)
 {
+	/* Thread Specific variables */
 	WSADATA				wsaData;
 	HANDLE				gestureThread, listenerThread;
 	DWORD				gestureThreadID, listenerThreadID;
 	threadSharedItems	*gestureShared, *listenerShared;
+	
 
 	char		buf[GAZEBO_CMD_MSG_SIZE];
 	int			cmd_id;
 	double		turn_angle;
 	uint16_t	machineInput;
+	StateMachine *FSM = new StateMachine();
 
 	/* Allocate and initilize memory */
 	gestureShared	= (threadSharedItems*)malloc(sizeof(threadSharedItems));
@@ -142,12 +145,12 @@ int main(/*array<System::String ^> ^args*/)
 
 	/* Main task loop */
 	while (1) {
-		Sleep(STATE_MACHINE_TICK_TIME_MS);
+		Sleep( STATE_MACHINE_TICK_TIME_MS );
 
 		/* Lock mutex on listener shared data and read latest data update */
 		WaitForSingleObject(listenerShared->mutex, INFINITE);
 		if (listenerShared->new_msg == TRUE) {
-			machineInput = machineInput | *((uint16_t*)(listenerShared->msg_p));
+			machineInput |= *((uint16_t*)(listenerShared->msg_p));
 		}
 		listenerShared->new_msg = FALSE;
 		ReleaseMutex(listenerShared->mutex);
@@ -155,16 +158,26 @@ int main(/*array<System::String ^> ^args*/)
 		/* Lock mutex on gesture shared data and read latest data update */
 		WaitForSingleObject(gestureShared->mutex, INFINITE);
 		if (gestureShared->new_msg == TRUE) {
-			machineInput = machineInput | ((gestureData*)(gestureShared->msg_p))->user_cmd;
+			machineInput |= ((gestureData*)(gestureShared->msg_p))->user_cmd;
 			turn_angle = ((gestureData*)(gestureShared->msg_p))->arg;
 		}
 		gestureShared->new_msg = FALSE;
 		ReleaseMutex(gestureShared->mutex);
 
-		if (cmd_id == REVERSE_CMD) cmd_id = FORWARD_CMD;
-		else cmd_id = REVERSE_CMD;
+		/* Send input to FSM, step, and get output */
+		FSM->setInput(machineInput);
+		FSM->stepMachine();
+		cmd_id = FSM->getOutputCmd();
+		machineInput = NULL_CMD_MASK;
+
+		/* Send command and argument (as applicable) to gazeboInterface */
 		memcpy(&buf[0], &cmd_id, sizeof(cmd_id));
-		memcpy(&buf[sizeof(cmd_id)], &turn_angle, sizeof(turn_angle));
+		if ((cmd_id == TURN_L_CMD) || (cmd_id == TURN_R_CMD)){
+			memcpy(&buf[sizeof(cmd_id)], &turn_angle, sizeof(turn_angle));
+		}
+		else{
+			memset(&buf[sizeof(cmd_id)], 0x00, sizeof(double));
+		}
 		if (TCP_Socket->Send(buf, sizeof(buf)) == -1) {
 			printf("TCP Send error.\n");
 		}
@@ -285,17 +298,17 @@ DWORD WINAPI listenThreadFunction(LPVOID lpParam)
 		sensorMask = 0;
 		if (sensorData.sensor_ranges[WALL_ID % GAZEBO_SENSOR_BASE] < WALL_SENSOR_TRIP_RANGE) 
 		{
-			sensorMask = sensorMask | WALL_SENSOR_MASK;
+			sensorMask |= WALL_SENSOR_MASK;
 		}
 		if (sensorData.sensor_ranges[LEFT_ID % GAZEBO_SENSOR_BASE] > TILT_SENSOR_TRIP_RANGE ||
 			sensorData.sensor_ranges[LEFTFRONT_ID % GAZEBO_SENSOR_BASE] > TILT_SENSOR_TRIP_RANGE ) 
 		{
-			sensorMask = sensorMask | LEFT_SENSOR_MASK;
+			sensorMask |= LEFT_SENSOR_MASK;
 		}
 		if (sensorData.sensor_ranges[RIGHT_ID % GAZEBO_SENSOR_BASE] > TILT_SENSOR_TRIP_RANGE ||
 			sensorData.sensor_ranges[RIGHTFRONT_ID % GAZEBO_SENSOR_BASE] > TILT_SENSOR_TRIP_RANGE)
 		{
-			sensorMask = sensorMask | RIGHT_SENSOR_MASK;
+			sensorMask |= RIGHT_SENSOR_MASK;
 		}
 
 		/* Update shared data and check if thread has been told to shutdown. */

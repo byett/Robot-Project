@@ -14,7 +14,7 @@ StateMachine::StateMachine()
 {
 	/* Initial FSM State */
 	currentState = STOP_STATE;
-	machineMode = AUTO_MODE;
+	machineMode = MANUAL_MODE;
 	outputCmd = NULL_CMD;
 	tickCount = 0;
 }
@@ -43,21 +43,180 @@ int StateMachine::stepMachine()
 {
 	/*	State machine behavior defined in MATLAB Simulink file 
 	 *	Current located at $ROBOT_PROJECT_HOME/cps.slx
+	 *	For Manual mode of operation, the mid-level hierarchy is evaluated before the bottom-level
 	 */
 
 	tickCount++;
-	switch (machineMode) {
+	outputCmd = NULL_CMD;
 
+	switch (machineMode) {
 	/* Manual Mode */
 	case MANUAL_MODE:
 		if (externalInput & AUTO_MODE_CMD_MASK) {
 			machineMode = AUTO_MODE;
 			currentState = AUTO_FORWARD_STATE;
 			outputCmd = FORWARD_CMD;
+			break;
 		}
 		else {
+			/* Mid-level of Hierarchy */
+			if (externalInput & (WALL_SENSOR_MASK | LEFT_SENSOR_MASK | RIGHT_SENSOR_MASK)) {
+				currentState = AVOID_OBSTACLE_STATE;
+				outputCmd = REVERSE_CMD;
+				break;
+			}
 			switch (currentState) {
+			case STOP_STATE:
+			case STOP_L_STATE:
+			case STOP_R_STATE:
+				if (externalInput & FORWARD_CMD_MASK) {
+					currentState = FORWARD_STATE;
+					outputCmd = FORWARD_CMD;
+				}
+				else if (externalInput & REVERSE_CMD_MASK) {
+					currentState = REVERSE_STATE;
+					outputCmd = REVERSE_CMD;
+				}
+				break;
+			case FORWARD_STATE:
+			case FORWARD_L_STATE:
+			case FORWARD_R_STATE:
+				if (externalInput & STOP_CMD_MASK) {
+					currentState = STOP_STATE;
+					outputCmd = STOP_CMD;
+				}
+				else if (externalInput & REVERSE_CMD_MASK) {
+					currentState = REVERSE_STATE;
+					outputCmd = REVERSE_CMD;
+				}
+				break;
+			case REVERSE_STATE:
+			case REVERSE_L_STATE:
+			case REVERSE_R_STATE:
+				if (externalInput & STOP_CMD_MASK) {
+					currentState = STOP_STATE;
+					outputCmd = STOP_CMD;
+				}
+				else if (externalInput & FORWARD_CMD_MASK) {
+					currentState = FORWARD_STATE;
+					outputCmd = FORWARD_CMD;
+				}
+				break;
+			case AVOID_OBSTACLE_STATE:
+				if ( !(externalInput & (WALL_SENSOR_MASK | LEFT_SENSOR_MASK | RIGHT_SENSOR_MASK)) ) {
+					currentState = STOP_STATE;
+					outputCmd = STOP_CMD;
+				}
+				else outputCmd = REVERSE_CMD;
+			default:
+				printf("ERROR: Unknown FSM State.\n");
+				return -1;
+			}
 
+			/* If Mid-level hierarchy caused state transition, do not evaluate bottom level */
+			if (outputCmd != NULL_CMD) break;
+
+			/* Bottom level of Hierarchy */
+			switch (currentState) {
+			case STOP_STATE:
+				if (externalInput & TURN_L_CMD_MASK) {
+					currentState = STOP_L_STATE;
+					outputCmd = TURN_L_CMD;
+				}
+				else if (externalInput & TURN_R_CMD_MASK) {
+					currentState = STOP_R_STATE;
+					outputCmd = TURN_R_CMD;
+				}
+				else outputCmd = STOP_CMD;
+				break;
+			case STOP_L_STATE:
+				if (externalInput & (STOP_CMD_MASK | STOP_TURN_CMD_MASK)) {
+					currentState = STOP_STATE;
+					outputCmd = STOP_CMD;
+				}
+				else if (externalInput & TURN_R_CMD) {
+					currentState = STOP_R_STATE;
+					outputCmd = TURN_R_CMD;
+				}
+				else outputCmd = TURN_L_CMD;
+				break;
+			case STOP_R_STATE:
+				if (externalInput & (STOP_CMD_MASK | STOP_TURN_CMD_MASK)) {
+					currentState = STOP_STATE;
+					outputCmd = STOP_CMD;
+				}
+				else if (externalInput & TURN_L_CMD) {
+					currentState = STOP_L_STATE;
+					outputCmd = TURN_L_CMD;
+				}
+				else outputCmd = TURN_R_CMD;
+				break;
+			case FORWARD_STATE:
+				if (externalInput & TURN_L_CMD_MASK) {
+					currentState = FORWARD_L_STATE;
+					outputCmd = FORWARD_L_CMD;
+				}
+				else if (externalInput & TURN_R_CMD_MASK) {
+					currentState = FORWARD_R_STATE;
+					outputCmd = FORWARD_R_CMD;
+				}
+				else outputCmd = FORWARD_CMD;
+				break;
+			case FORWARD_L_STATE:
+				if (externalInput & (FORWARD_CMD_MASK | STOP_TURN_CMD_MASK)) {
+					currentState = FORWARD_STATE;
+					outputCmd = FORWARD_CMD;
+				}
+				else if (externalInput & TURN_R_CMD) {
+					currentState = FORWARD_R_STATE;
+					outputCmd = FORWARD_R_CMD;
+				}
+				else outputCmd = FORWARD_L_CMD;
+				break;
+			case FORWARD_R_STATE:
+				if (externalInput & (FORWARD_CMD_MASK | STOP_TURN_CMD_MASK)) {
+					currentState = FORWARD_STATE;
+					outputCmd = FORWARD_CMD;
+				}
+				else if (externalInput & TURN_L_CMD) {
+					currentState = FORWARD_L_STATE;
+					outputCmd = FORWARD_L_CMD;
+				}
+				else outputCmd = FORWARD_R_CMD;
+			case REVERSE_STATE:
+				if (externalInput & TURN_L_CMD_MASK) {
+					currentState = REVERSE_L_STATE;
+					outputCmd = REVERSE_L_CMD;
+				}
+				else if (externalInput & TURN_R_CMD_MASK) {
+					currentState = REVERSE_R_STATE;
+					outputCmd = REVERSE_R_CMD;
+				}
+				else outputCmd = REVERSE_CMD;
+				break;
+			case REVERSE_L_STATE:
+				if (externalInput & (REVERSE_CMD_MASK | STOP_TURN_CMD_MASK)) {
+					currentState = REVERSE_STATE;
+					outputCmd = REVERSE_CMD;
+				}
+				else if (externalInput & TURN_R_CMD_MASK) {
+					currentState = REVERSE_R_STATE;
+					outputCmd = REVERSE_R_CMD;
+				}
+				else outputCmd = REVERSE_L_CMD;
+			case REVERSE_R_STATE:
+				if (externalInput & (REVERSE_CMD_MASK | STOP_TURN_CMD_MASK)) {
+					currentState = REVERSE_STATE;
+					outputCmd = REVERSE_CMD;
+				}
+				else if (externalInput & TURN_L_CMD_MASK) {
+					currentState = REVERSE_L_STATE;
+					outputCmd = REVERSE_L_CMD;
+				}
+				else outputCmd = REVERSE_R_CMD;
+			default:
+				printf("ERROR: Unknown FSM state.\n");
+				return -1;
 			}
 		}
 		break;
@@ -130,122 +289,6 @@ int StateMachine::stepMachine()
 		return -1;
 	}
 
-	/* Mid-level of Hierarchy */
-	switch (currentState) {
-	case STOP_STATE:
-	case STOP_L_STATE:
-	case STOP_R_STATE:
-		if (latestUserCmd == FORWARD_CMD) {
-			currentState = FORWARD_STATE;
-		}
-		else if (latestUserCmd == REVERSE_CMD) {
-			currentState = REVERSE_STATE;
-		}
-		break;
-	case FORWARD_STATE:
-	case FORWARD_L_STATE:
-	case FORWARD_R_STATE:
-		if (latestUserCmd == STOP_CMD) {
-			currentState = STOP_STATE;
-		}
-		else if (latestUserCmd == REVERSE_CMD) {
-			currentState = REVERSE_STATE;
-		}
-		break;
-	case REVERSE_STATE:
-	case REVERSE_L_STATE:
-	case REVERSE_R_STATE:
-		if (latestUserCmd == STOP_CMD) {
-			currentState = STOP_STATE;
-		}
-		else if (latestUserCmd == FORWARD_CMD) {
-			currentState = FORWARD_STATE;
-		}
-		break;
-	default:
-		printf("ERROR: Unknown FSM State.\n");
-		return -1;
-	}
-
-	/* Lowest level of Hierarchy */
-	switch (currentState) {
-	case STOP_STATE:
-		if (latestUserCmd == TURN_L_CMD) {
-			currentState = STOP_L_STATE;
-		}
-		else if (latestUserCmd == TURN_R_CMD) {
-			currentState = STOP_R_STATE;
-		}
-		break;
-	case STOP_L_STATE:
-		if (latestUserCmd == STOP_CMD) {
-			currentState = STOP_STATE;
-		}
-		else if (latestUserCmd == TURN_R_CMD) {
-			currentState = STOP_R_STATE;
-		}
-		break;
-	case STOP_R_STATE:
-		if (latestUserCmd == STOP_CMD) {
-			currentState = STOP_STATE;
-		}
-		else if (latestUserCmd == TURN_L_CMD) {
-			currentState = STOP_L_STATE;
-		}
-		break;
-	case FORWARD_STATE:
-		if (latestUserCmd == TURN_L_CMD) {
-			currentState = FORWARD_L_STATE;
-		}
-		else if (latestUserCmd == TURN_R_CMD) {
-			currentState = FORWARD_R_STATE;
-		}
-		break;
-	case FORWARD_L_STATE:
-		if (latestUserCmd == FORWARD_CMD) {
-			currentState = FORWARD_STATE;
-		}
-		else if (latestUserCmd == TURN_R_CMD) {
-			currentState = FORWARD_R_STATE;
-		}
-		break;
-	case FORWARD_R_STATE:
-		if (latestUserCmd == FORWARD_CMD) {
-			currentState = FORWARD_STATE;
-		}
-		else if (latestUserCmd == TURN_L_CMD) {
-			currentState = FORWARD_L_STATE;
-		}
-		break;
-	case REVERSE_STATE:
-		if (latestUserCmd == TURN_L_CMD) {
-			currentState = REVERSE_L_STATE;
-		}
-		else if (latestUserCmd == TURN_R_CMD) {
-			currentState = REVERSE_R_STATE;
-		}
-		break;
-	case REVERSE_L_STATE:
-		if (latestUserCmd == FORWARD_CMD) {
-			currentState = FORWARD_STATE;
-		}
-		else if (latestUserCmd == TURN_R_CMD) {
-			currentState = FORWARD_R_STATE;
-		}
-		break;
-	case REVERSE_R_STATE:
-		if (latestUserCmd == REVERSE_CMD) {
-			currentState = REVERSE_STATE;
-		}
-		else if (latestUserCmd == TURN_L_CMD) {
-			currentState = REVERSE_L_STATE;
-		}
-		break;
-	default:
-		printf("ERROR: Unknown FSM state.\n");
-		return -1;
-	}
-
-	latestUserCmd = NULL_CMD;
+	externalInput = 0;
 	return 0;
 }

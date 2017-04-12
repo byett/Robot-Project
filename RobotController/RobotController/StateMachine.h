@@ -13,7 +13,7 @@
 #include "GazeboDefs.h"
 #include "StateMachineDefs.h"
 
-#include <string>
+#include "stdafx.h"
 
 /* States of machine */
 #define NULL_STATE				0x00
@@ -26,10 +26,11 @@
 #define REVERSE_STATE			0x07
 #define REVERSE_L_STATE			0x08
 #define REVERSE_R_STATE			0x09
-#define AUTO_FORWARD_STATE		0x10
-#define AUTO_REVERSE_STATE		0x11
-#define AUTO_TURN_L_STATE		0x12
-#define AUTO_TURN_R_STATE		0x13
+#define AVOID_OBSTACLE_STATE	0x10
+#define AUTO_FORWARD_STATE		0x11
+#define AUTO_REVERSE_STATE		0x12
+#define AUTO_TURN_L_STATE		0x13
+#define AUTO_TURN_R_STATE		0x14
 
 #define AUTO_MODE				0x30
 #define MANUAL_MODE				0x31

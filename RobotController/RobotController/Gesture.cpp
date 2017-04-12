@@ -135,17 +135,18 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		}
 		if (turncount == 10) {
 			user_arg = result / 10;
-			if(user_arg > 0) user_input = TURN_R_CMD_MASK;
-			else user_input = TURN_L_CMD_MASK;
+			if(user_arg > 0) user_input |= TURN_R_CMD_MASK;
+			else user_input |= TURN_L_CMD_MASK;
 			clearall();
 		}
 	}
+	else user_input |= STOP_TURN_CMD_MASK;
 	if (rh.y > (rs.y + 0.15)) {
 		backwarda = 0;
 		backwardb = 0;
 		if (stop == 10) {
 			clearall();
-			user_input = STOP_CMD_MASK;
+			user_input |= STOP_CMD_MASK;
 		}
 		else if (stop <= 9) {
 			stop++;
@@ -155,7 +156,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		backwarda = 0;
 		backwardb = 0;
 		if (forwarda == 2) {
-			user_input = FORWARD_CMD_MASK;
+			user_input |= FORWARD_CMD_MASK;
 			clearall();
 		}
 		else {
@@ -176,7 +177,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		autoa = 0;
 		autob = 0;
 		if (backwarda == 2) {
-			user_input = REVERSE_CMD_MASK;
+			user_input |= REVERSE_CMD_MASK;
 			clearall();
 		}
 		else {
@@ -195,7 +196,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		mana = 0;
 		manb = 0;
 		if (autoa == 2) {
-			user_input = AUTO_MODE_CMD_MASK;
+			user_input |= AUTO_MODE_CMD_MASK;
 			clearall();
 		}
 		else {
@@ -214,7 +215,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		autoa = 0;
 		autob = 0;
 		if (mana == 2) {
-			user_input = MANUAL_MODE_CMD_MASK;
+			user_input |= MANUAL_MODE_CMD_MASK;
 			clearall();
 		}
 		else {

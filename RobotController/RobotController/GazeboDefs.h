@@ -20,8 +20,12 @@
 #define REVERSE_CMD			0xB3
 #define TURN_L_CMD			0xB4
 #define TURN_R_CMD			0xB5
-#define MANUAL_MODE_CMD		0xB6
-#define AUTO_MODE_CMD		0xB7
+#define FORWARD_L_CMD		0xB6
+#define FORWARD_R_CMD		0xB7
+#define REVERSE_L_CMD		0xB8
+#define REVERSE_R_CMD		0xB9
+#define MANUAL_MODE_CMD		0xBA
+#define AUTO_MODE_CMD		0xBB
 
 #define GAZEBO_DATA_MSG_SIZE	sizeof(int) + sizeof(double)
 #define	GAZEBO_CMD_MSG_SIZE		sizeof(int) + sizeof(double)
