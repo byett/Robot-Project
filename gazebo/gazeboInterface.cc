@@ -37,27 +37,35 @@
 
 #define TCP_PORT "18424"
 #define UDP_PORT "18423"
-#define IP_ADDR "129.59.105.33"
 #define BACKLOG 10
 
-// Sensor ID's
-#define WALL_ID 0xA0
-#define LEFT_ID 0xA1
-#define LEFTFRONT_ID 0xA2
-#define RIGHT_ID 0xA3
-#define RIGHTFRONT_ID 0xA4
+/* Gazebo sensor ID's */
+#define	GAZEBO_SENSOR_COUNT		5
+#define GAZEBO_SENSOR_BASE		0xA0
+#define WALL_ID				0xA0
+#define LEFT_ID				0xA1
+#define LEFTFRONT_ID			0xA2
+#define RIGHT_ID			0xA3
+#define RIGHTFRONT_ID			0xA4
 
-// Command ID's
-#define STOP_CMD 0xB0
-#define FORWARD_CMD 0xB1
-#define REVERSE_CMD 0xB2
-#define TURN_CMD 0xB3
-#define CMD_SUCCESS 0xBE
-#define CMD_FAIL 0xBF
+/* Gazebo/User command ID's */
+#define NULL_CMD			0x00
+#define STOP_CMD			0xB1
+#define FORWARD_CMD			0xB2
+#define REVERSE_CMD			0xB3
+#define TURN_L_CMD			0xB4
+#define TURN_R_CMD			0xB5
+#define FORWARD_L_CMD	        0xB6
+#define FORWARD_R_CMD		0xB7
+#define REVERSE_L_CMD		0xB8
+#define REVERSE_R_CMD		0xB9
+#define MANUAL_MODE_CMD	  	0xBA
+#define AUTO_MODE_CMD		0xBB
 
 // Global Socket ID. Bad idea, for testing only.
 int tcp_socket, udp_socket;
 struct addrinfo *servinfo;
+char ip_address[INET6_ADDRSTRLEN];
 
 /////////////////////////////////////////////////////
 // Networking helper functions
@@ -85,7 +93,7 @@ int connect_to_server_tcp()
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
 
-  if ((rv = getaddrinfo(IP_ADDR, TCP_PORT, &hints, &servinfo)) != 0) {
+  if ((rv = getaddrinfo(ip_address, TCP_PORT, &hints, &servinfo)) != 0) {
       fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
       return -1;
   }
@@ -135,7 +143,7 @@ int connect_to_server_udp()
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_DGRAM;
 
-  if ((rv = getaddrinfo(IP_ADDR, UDP_PORT, &hints, &servinfo)) != 0) {
+  if ((rv = getaddrinfo(ip_address, UDP_PORT, &hints, &servinfo)) != 0) {
       fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
       return -1;
   }
@@ -146,13 +154,6 @@ int connect_to_server_udp()
       perror("server: socket");
       continue;
     }
-/*
-    if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1){
-   	 close(sockfd);
-   	 perror("listener: bind");
-   	 continue;
-    }
-*/
     break;
   }
 
@@ -168,7 +169,7 @@ int connect_to_server_udp()
   while(1){
     sleep(1);
     printf("Sending handshake message...\n");
-    sendto(sockfd, init_msg, sizeof(init_msg), NULL, servinfo->ai_addr, servinfo->ai_addrlen);
+    sendto(sockfd, init_msg, sizeof(init_msg), 0, servinfo->ai_addr, servinfo->ai_addrlen);
 
     addr_len = sizeof(struct sockaddr);
     memset(init_msg, 0, sizeof init_msg);
@@ -321,7 +322,10 @@ int main(int _argc, char **_argv)
   gazebo::transport::PublisherPtr velCmdPub = node->Advertise<gazebo::msgs::Pose>("~/create/vel_cmd");
   velCmdPub->WaitForConnection();
 
-  // Start UDP Server
+  // Connect to Server, TCP then UDP. BLOCKING.
+  std::cout << "Enter IP Address to connect to: ";
+  std::cin.getline(ip_address, INET6_ADDRSTRLEN);
+  std::cout << "Attempting TCP connection..." << std::endl;
   connect_to_server_tcp();
   connect_to_server_udp();
   
@@ -362,7 +366,7 @@ int main(int _argc, char **_argv)
       case REVERSE_CMD:
 	gazebo::msgs::Set(&msg, reverse);
 	break;
-      case TURN_CMD:
+      case TURN_L_CMD:
 	gazebo::msgs::Set(&msg, turn);
 	break;
       case STOP_CMD:
@@ -385,7 +389,8 @@ int main(int _argc, char **_argv)
       }
       else timed_cmd_executing = false;
     }
-
+    
+    /* Code for executing commands for a certain amount of time and sending a SUCCESS message
     if( timed_cmd_executing ){
       if( (stopTime.tv_sec < curTime.tv_sec) ||
 	  ((stopTime.tv_sec == curTime.tv_sec) && (stopTime.tv_usec < curTime.tv_usec)) ){
@@ -399,11 +404,10 @@ int main(int _argc, char **_argv)
 	timed_cmd_executing = false;
       }
     }
+    */
 
     gazebo::common::Time::MSleep(1);
   }
-
-  
 
   // Make sure to shut everything down.
   close(tcp_socket);
