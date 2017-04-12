@@ -233,6 +233,7 @@ int StateMachine::stepMachine()
 			machineMode = MANUAL_MODE;
 			currentState = STOP_STATE;
 			outputCmd = STOP_CMD;
+			break;
 		}
 		else {
 			switch (currentState) {

@@ -34,7 +34,7 @@ typedef struct threadSharedItems{
 }threadSharedItems;
 
 typedef struct gestureData {
-	int		user_cmd;
+	uint16_t		user_cmd;
 	double	arg;
 }gestureData;
 
@@ -165,14 +165,16 @@ int main(/*array<System::String ^> ^args*/)
 		gestureShared->new_msg = FALSE;
 		ReleaseMutex(gestureShared->mutex);
 
-		/* DEBUG: Get user input from command line */
-		machineInput |= DEBUG_GetUserInputCMDLine();
-
 		/* Send input to FSM, step, and get output */
 		FSM->setInput(machineInput);
 		FSM->stepMachine();
 		cmd_id = FSM->getOutputCmd();
 		machineInput = NULL_CMD_MASK;
+
+		/* DEBUG 
+		machineInput = FSM->getCurrentState();
+		printf("cmd: %d\tstate: %d\n", cmd_id, machineInput);
+		machineInput = NULL_CMD_MASK;*/
 
 		/* Send command and argument (as applicable) to gazeboInterface */
 		memcpy(&buf[0], &cmd_id, sizeof(cmd_id));
@@ -227,7 +229,7 @@ DWORD WINAPI gestureThreadFunction(LPVOID lpParam)
 	/* Configure shared data structure */
 	WaitForSingleObject(gestureShared->mutex, INFINITE);
 	gestureShared->msg_len = sizeof(gestureData);
-	gestureShared->msg_p = (char*)&inputData;
+	gestureShared->msg_p = (char*)inputData;
 	ReleaseMutex(gestureShared->mutex);
 
 	while ( !threadShutdown ) {
@@ -237,10 +239,14 @@ DWORD WINAPI gestureThreadFunction(LPVOID lpParam)
 
 		/* Lock mutex on shared data. Update inputData if necessary and check if thread has been told to shutdown */
 		WaitForSingleObject(gestureShared->mutex, INFINITE);
-		if (userInput != NULL_CMD_MASK) {
+		if ((userInput & ~(STOP_TURN_CMD_MASK)) != NULL_CMD_MASK) {
 			gestureShared->new_msg = TRUE;
 			inputData->user_cmd = userInput;
 			inputData->arg = arg;
+		}
+		else if (userInput & STOP_TURN_CMD_MASK){
+			gestureShared->new_msg = TRUE;
+			inputData->user_cmd |= STOP_TURN_CMD_MASK;
 		}
 		threadShutdown = gestureShared->threadShutdown;
 		ReleaseMutex(gestureShared->mutex);
