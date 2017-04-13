@@ -37,7 +37,8 @@
 
 #define TCP_PORT "18424"
 #define UDP_PORT "18423"
-#define BACKLOG 10
+#define BACKLOG  10
+#define TURN_ARG_SCALE_FACTOR   0.1
 
 /* Gazebo sensor ID's */
 #define	GAZEBO_SENSOR_COUNT		5
@@ -342,9 +343,9 @@ int main(int _argc, char **_argv)
 
   // Messages
   ignition::math::Pose3<double> forward(1,0,0,0,0,0);
-  ignition::math::Pose3<double> stop(0,0,0,0,0,0);
-  ignition::math::Pose3<double> turn(0,0,0,0,0,10);
   ignition::math::Pose3<double> reverse(-1,0,0,0,0,0);
+  ignition::math::Pose3<double> stop(0,0,0,0,0,0);
+  ignition::math::Pose3<double> turn;
   gazebo::msgs::Pose msg;
   int cmd_id, round_arg;
   bool timed_cmd_executing;
@@ -361,23 +362,38 @@ int main(int _argc, char **_argv)
     if(cmd_id > 0){
       switch(cmd_id){
       case FORWARD_CMD:
-			gazebo::msgs::Set(&msg, forward);
-			break;
+	gazebo::msgs::Set(&msg, forward);
+	break;
       case REVERSE_CMD:
 	gazebo::msgs::Set(&msg, reverse);
-	break;
-      case TURN_L_CMD:
-	gazebo::msgs::Set(&msg, turn);
 	break;
       case STOP_CMD:
 	gazebo::msgs::Set(&msg, stop);
 	break;
+      case TURN_L_CMD:
+      case TURN_R_CMD:
+	turn.Set(0,0,0,0,0,TURN_ARG_SCALE_FACTOR*cmd_arg);
+	gazebo::msgs::Set(&msg, turn);
+	break;
+      case FORWARD_L_CMD:
+      case FORWARD_R_CMD:
+	turn.Set(1,0,0,0,0,TURN_ARG_SCALE_FACTOR*cmd_arg);
+	gazebo::msgs::Set(&msg, turn);
+	break;
+      case REVERSE_L_CMD:
+      case REVERSE_R_CMD:
+	turn.Set(-1,0,0,0,0,TURN_ARG_SCALE_FACTOR*cmd_arg);
+	gazebo::msgs::Set(&msg, turn);
+	break;
       default:
 	std::cout << "Unknown command ID: " << cmd_id << std::endl;
 	break;
-      }
+      } /* End switch */
       velCmdPub->Publish( msg );
-      
+    } /* End if */
+
+
+    /* Code for executing commands for a certain amount of time and sending a SUCCESS message  
       round_arg = (int)round( cmd_arg );
       stopTime = curTime;
       if(round_arg > 0){
@@ -390,7 +406,6 @@ int main(int _argc, char **_argv)
       else timed_cmd_executing = false;
     }
     
-    /* Code for executing commands for a certain amount of time and sending a SUCCESS message
     if( timed_cmd_executing ){
       if( (stopTime.tv_sec < curTime.tv_sec) ||
 	  ((stopTime.tv_sec == curTime.tv_sec) && (stopTime.tv_usec < curTime.tv_usec)) ){
@@ -407,9 +422,9 @@ int main(int _argc, char **_argv)
     */
 
     gazebo::common::Time::MSleep(1);
-  }
+  } /* End while */
 
-  // Make sure to shut everything down.
+  /* Make sure to shut everything down. */
   close(tcp_socket);
   close(udp_socket);
   freeaddrinfo(servinfo);
