@@ -313,25 +313,39 @@ void cb_rightfront(ConstLaserScanStampedPtr &_msg)
 int main(int _argc, char **_argv)
 {
   // Load gazebo
+  std::cout << "Loading gazebo client...";
+  std::cout.flush();
   gazebo::client::setup(_argc, _argv);
+  std::cout << "done." << std::endl;
 
   // Create our node for communication
+  std::cout << "Initializing gazebo communication node...";
+  std::cout.flush();
   gazebo::transport::NodePtr node(new gazebo::transport::Node());
   node->Init();
+  std::cout << "done." << std::endl;
 
   // Construct publisher and wait for listener
+  std::cout << "Initializing velocity command publisher...";
+  std::cout.flush();
   gazebo::transport::PublisherPtr velCmdPub = node->Advertise<gazebo::msgs::Pose>("~/create/vel_cmd");
+  std::cout << "done." << std::endl;
+  std::cout << "Waiting for command subscriber...";
+  std::cout.flush();
   velCmdPub->WaitForConnection();
+  std::cout << "connected." << std::endl;
 
   // Connect to Server, TCP then UDP. BLOCKING.
   std::cout << "Enter IP Address to connect to: ";
   std::cin.getline(ip_address, INET6_ADDRSTRLEN);
   std::cout << "Attempting TCP connection..." << std::endl;
   connect_to_server_tcp();
+  std::cout << "Attempting UDP connection..." << std::endl;
   connect_to_server_udp();
   
   // Subscribe to Gazebo topics
   std::cout << "Starting topic subscribers...";
+  std::cout.flush();
   gazebo::transport::SubscriberPtr wall_sensor_sub, left_sensor_sub, leftfront_sensor_sub, right_sensor_sub, rightfront_sensor_sub;
   std::string base_path = "~/create/base/";
   wall_sensor_sub       = node->Subscribe( base_path + "wall_sensor/scan", cb_wall);
@@ -355,6 +369,7 @@ int main(int _argc, char **_argv)
 
   timed_cmd_executing = false;
 
+  std::cout << "Starting main program loop." << std::endl;
   while (true){
     recvCmd(&cmd_id, &cmd_arg);
     gettimeofday(&curTime, NULL);
