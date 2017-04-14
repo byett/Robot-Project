@@ -38,7 +38,7 @@
 #define TCP_PORT "18424"
 #define UDP_PORT "18423"
 #define BACKLOG  10
-#define TURN_ARG_SCALE_FACTOR   0.1
+#define TURN_ARG_SCALE_FACTOR   -0.1 /* Factor for scaling and giving proper sign to turn angle argument received from RobotController */
 
 /* Gazebo sensor ID's */
 #define	GAZEBO_SENSOR_COUNT		5
