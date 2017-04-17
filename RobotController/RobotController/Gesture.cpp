@@ -124,14 +124,17 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		turncount++;
 		if (rh.x == lh.x) {
 			if (lh.y > rh.y) {
-				result += 90;
+				result -= 90;
+				//result += 90;
 			}
 			else {
-				result += -90;
+				result += 90;
+				//result += -90;
 			}
 		}
 		else if (rh.x>lh.x) {
-			result += atan((lh.y - rh.y) / (rh.x - lh.x)) * 180 / PI;
+			result += atan((rh.y - lh.y) / (rh.x - lh.x)) * 180 / PI;
+			//result += atan((lh.y - rh.y) / (rh.x - lh.x)) * 180 / PI;
 		}
 		if (turncount == 10) {
 			user_arg = result / 10;
@@ -144,11 +147,13 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 	if (rh.y > (rs.y + 0.15)) {
 		backwarda = 0;
 		backwardb = 0;
-		if (stop == 10) {
+		if (stop == 5) {
+		//if (stop == 10) {
 			clearall();
 			user_input |= STOP_CMD_MASK;
 		}
-		else if (stop <= 9) {
+		else if (stop <= 4) {
+		//else if (stop <= 9) {
 			stop++;
 		}
 	}
@@ -174,8 +179,8 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 	if (lh.y < le.y && backwarda > 0) {
 		forwarda = 0;
 		forwardb = 0;
-		autoa = 0;
-		autob = 0;
+		//autoa = 0;
+		//autob = 0;
 		if (backwarda == 2) {
 			user_input |= REVERSE_CMD_MASK;
 			clearall();
@@ -230,17 +235,6 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 			mana = 1;
 		}
 	}
-	/*if (lh.y < le.y && backward==1) {
-	backward = 0;
-	myfile << "backward\n";
-	}
-	else {
-	backward = 0;
-	}
-	if (lh.y > le.y) {
-	backward++;
-	//Sleep(500);
-	}*/
 }
 
 /// <summary>
