@@ -362,10 +362,6 @@ int main(int _argc, char **_argv)
   ignition::math::Pose3d forward(1,0,0,0,0,0);
   ignition::math::Pose3d reverse(-1,0,0,0,0,0);
   ignition::math::Pose3d stop(0,0,0,0,0,0);
-  ignition::math::Pose3d forwardL(1,0,0,0,0,3.0);
-  ignition::math::Pose3d reverseL(-1,0,0,0,0,3.0);
-  ignition::math::Pose3d stopL(0,0,0,0,0,3.0);
-  ignition::math::Pose3d turn;
   gazebo::msgs::Pose msg;
   int cmd_id, round_arg;
   bool timed_cmd_executing;
@@ -384,39 +380,26 @@ int main(int _argc, char **_argv)
       switch(cmd_id){
       case FORWARD_CMD:
         msg = gazebo::msgs::Convert(forward);
-        //gazebo::msgs::Set(&msg, forward);
-        //msg->Set(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         break;
       case REVERSE_CMD:
         msg = gazebo::msgs::Convert(reverse);
-        //gazebo::msgs::Set(&msg, reverse);
-        //msg->Set(-1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     break;
       case STOP_CMD:
         msg = gazebo::msgs::Convert(stop);
-        //gazebo::msgs::Set(&msg, stop);
-        //msg->Set(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         break;
       case TURN_L_CMD:
       case TURN_R_CMD:
-        //gazebo::msgs::Set(&msg, ignition::math::Pose3d(ignition::math::Vector3d(0,0,0), ignition::math::Quaterniond(0,0,TURN_ARG_SCALE_FACTOR*cmd_arg)));
-        msg = gazebo::msgs::Convert(ignition::math::Pose3d(ignition::math::Vector3d(0,0,0), ignition::math::Quaterniond(0,0,TURN_ARG_SCALE_FACTOR*cmd_arg)));
-        //gazebo::msgs::Set(&msg, turn);
-        //msg->Set(0.0, 0.0, 0.0, 0.0, 0.0, TURN_ARG_SCALE_FACTOR*cmd_arg);
+        msg = gazebo::msgs::Convert(ignition::math::Pose3d(ignition::math::Vector3d(0 , 0, 0), ignition::math::Quaterniond(0, 0, TURN_ARG_SCALE_FACTOR*cmd_arg)));
         break;
       case FORWARD_L_CMD:
       case FORWARD_R_CMD:
-        turn.Set(1,0,0,0,0,TURN_ARG_SCALE_FACTOR*cmd_arg);
-        msg = gazebo::msgs::Convert(forwardL);
-        //gazebo::msgs::Set(&msg, turn);
-        //msg->Set(1.0, 0.0, 0.0, 0.0, 0.0, TURN_ARG_SCALE_FACTOR*cmd_arg);
+		msg = gazebo::msgs::Convert(ignition::math::Pose3d(ignition::math::Vector3d(1, 0, 0), ignition::math::Quaterniond(0, 0, TURN_ARG_SCALE_FACTOR*cmd_arg)));
+		break;
 	break;
       case REVERSE_L_CMD:
       case REVERSE_R_CMD:
-        turn.Set(-1,0,0,0,0,TURN_ARG_SCALE_FACTOR*cmd_arg);
-        msg = gazebo::msgs::Convert(forwardL);
-        //gazebo::msgs::Set(&msg, turn);
-        //msg->Set(-1.0, 0.0, 0.0, 0.0, 0.0, TURN_ARG_SCALE_FACTOR*cmd_arg);
+		msg = gazebo::msgs::Convert(ignition::math::Pose3d(ignition::math::Vector3d(-1, 0, 0), ignition::math::Quaterniond(0, 0, TURN_ARG_SCALE_FACTOR*cmd_arg)));
+		break;
 	break;
       default:
 	std::cout << "Unknown command ID: " << cmd_id << std::endl;
@@ -424,35 +407,6 @@ int main(int _argc, char **_argv)
       } /* End switch */
       velCmdPub->Publish( msg );
     } /* End if */
-
-
-    /* Code for executing commands for a certain amount of time and sending a SUCCESS message  
-      round_arg = (int)round( cmd_arg );
-      stopTime = curTime;
-      if(round_arg > 0){
-	stopTime.tv_sec += round_arg / 1000;
-	stopTime.tv_usec += (round_arg % 1000) * 1000;
-	stopTime.tv_sec += stopTime.tv_usec / 1000000;
-	stopTime.tv_usec = (stopTime.tv_usec % 1000000);
-	timed_cmd_executing = true;
-      }
-      else timed_cmd_executing = false;
-    }
-    
-    if( timed_cmd_executing ){
-      if( (stopTime.tv_sec < curTime.tv_sec) ||
-	  ((stopTime.tv_sec == curTime.tv_sec) && (stopTime.tv_usec < curTime.tv_usec)) ){
-	cmd_id = CMD_SUCCESS;
-	cmd_arg = 0.0;
-	memcpy( &buf[0], &cmd_id, sizeof(cmd_id) );
-	memcpy( &buf[sizeof(cmd_id)], &cmd_arg, sizeof(cmd_arg) );
-	cb_send( buf, sizeof(cmd_id) + sizeof(cmd_arg) );
-	gazebo::msgs::Set(&msg, stop);
-	velCmdPub->Publish( msg );
-	timed_cmd_executing = false;
-      }
-    }
-    */
 
     gazebo::common::Time::MSleep(1);
   } /* End while */
