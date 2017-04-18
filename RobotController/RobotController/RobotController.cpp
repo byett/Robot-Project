@@ -183,7 +183,10 @@ int main(/*array<System::String ^> ^args*/)
 
 		/* Send command and argument (as applicable) to gazeboInterface */
 		memcpy(&buf[0], &cmd_id, sizeof(cmd_id));
-		if ((cmd_id == TURN_L_CMD) || (cmd_id == TURN_R_CMD)){
+		if ((cmd_id == TURN_L_CMD) || (cmd_id == TURN_R_CMD) ||
+			(cmd_id == FORWARD_L_CMD) || (cmd_id == FORWARD_R_CMD) ||
+			(cmd_id == REVERSE_L_CMD) || (cmd_id == REVERSE_R_CMD))
+		{
 			memcpy(&buf[sizeof(cmd_id)], &turn_angle, sizeof(turn_angle));
 		}
 		else{
