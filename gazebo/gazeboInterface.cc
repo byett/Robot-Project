@@ -18,7 +18,6 @@
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/gazebo_client.hh>
-//#include <gazebo/math/gzmath.hh>
 #include <gazebo/math/Pose.hh>
 #include <ignition/math/Pose3.hh>
 
@@ -362,6 +361,7 @@ int main(int _argc, char **_argv)
   ignition::math::Pose3d forward(1,0,0,0,0,0);
   ignition::math::Pose3d reverse(-1,0,0,0,0,0);
   ignition::math::Pose3d stop(0,0,0,0,0,0);
+  ignition::math::Pose3d *turn = new ignition::math::Pose3d();
   gazebo::msgs::Pose msg;
   int cmd_id, round_arg;
   bool timed_cmd_executing;
@@ -389,17 +389,18 @@ int main(int _argc, char **_argv)
         break;
       case TURN_L_CMD:
       case TURN_R_CMD:
-        msg = gazebo::msgs::Convert(ignition::math::Pose3d(ignition::math::Vector3d(0 , 0, 0), ignition::math::Quaterniond(0, 0, TURN_ARG_SCALE_FACTOR*cmd_arg)));
+	turn->Set(0.0, 0.0, 0.0, 0.0, 0.0, TURN_ARG_SCALE_FACTOR*cmd_arg);
+        msg = gazebo::msgs::Convert(*turn);
         break;
       case FORWARD_L_CMD:
       case FORWARD_R_CMD:
-		msg = gazebo::msgs::Convert(ignition::math::Pose3d(ignition::math::Vector3d(1, 0, 0), ignition::math::Quaterniond(0, 0, TURN_ARG_SCALE_FACTOR*cmd_arg)));
-		break;
+	turn->Set(1.0, 0.0, 0.0, 0.0, 0.0, TURN_ARG_SCALE_FACTOR*cmd_arg);
+        msg = gazebo::msgs::Convert(*turn);
 	break;
       case REVERSE_L_CMD:
       case REVERSE_R_CMD:
-		msg = gazebo::msgs::Convert(ignition::math::Pose3d(ignition::math::Vector3d(-1, 0, 0), ignition::math::Quaterniond(0, 0, TURN_ARG_SCALE_FACTOR*cmd_arg)));
-		break;
+	turn->Set(-1.0, 0.0, 0.0, 0.0, 0.0, TURN_ARG_SCALE_FACTOR*cmd_arg);
+        msg = gazebo::msgs::Convert(*turn);
 	break;
       default:
 	std::cout << "Unknown command ID: " << cmd_id << std::endl;
