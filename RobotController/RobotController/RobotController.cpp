@@ -47,6 +47,7 @@ DWORD WINAPI listenThreadFunction(LPVOID lpParam);
 /* Helper functions */
 int shutdownThread(HANDLE thread, threadSharedItems *t_items);
 uint16_t DEBUG_GetUserInputCMDLine();
+void DEBUG_PrintUserCMD(uint16_t input);
 
 
 int main(/*array<System::String ^> ^args*/)
@@ -164,6 +165,10 @@ int main(/*array<System::String ^> ^args*/)
 		}
 		gestureShared->new_msg = FALSE;
 		ReleaseMutex(gestureShared->mutex);
+
+		/* DEBUG */
+		if ((machineInput != STOP_TURN_CMD_MASK) && (machineInput != NULL_CMD_MASK))
+			DEBUG_PrintUserCMD(machineInput);
 
 		/* Send input to FSM, step, and get output */
 		FSM->setInput(machineInput);
@@ -383,4 +388,25 @@ uint16_t DEBUG_GetUserInputCMDLine()
 	input = atoi(buf);
 
 	return input;
+}
+
+void DEBUG_PrintUserCMD(uint16_t input)
+{
+	printf("User Input:\n");
+	if (input & STOP_CMD_MASK)
+		printf("\tSTOP\n");
+	if (input & FORWARD_CMD_MASK)
+		printf("\tFORWARD\n");
+	if (input & REVERSE_CMD_MASK)
+		printf("\tREVERSE\n");
+	if (input & TURN_L_CMD_MASK)
+		printf("\tTURN_L\n");
+	if (input & TURN_R_CMD_MASK)
+		printf("\tTURN_R\n");
+	if (input & AUTO_MODE_CMD_MASK)
+		printf("\tAUTO MODE\n");
+	if (input & MANUAL_MODE_CMD_MASK)
+		printf("\tMANUAL MODE\n");
+
+	printf("\n");
 }

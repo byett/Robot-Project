@@ -1,0 +1,5 @@
+- Kinect does not work properly every time. Unknown why.
+
+- AUTO mode will reverse away from obstacles but does not turn properly.
+
+- Turning functionality is bad
