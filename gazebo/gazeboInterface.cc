@@ -18,6 +18,8 @@
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/gazebo_client.hh>
+//#include <gazebo/math/gzmath.hh>
+#include <gazebo/math/Pose.hh>
 #include <ignition/math/Pose3.hh>
 
 #include <iostream>
@@ -34,6 +36,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+
 
 #define TCP_PORT "18424"
 #define UDP_PORT "18423"
@@ -356,13 +359,14 @@ int main(int _argc, char **_argv)
   std::cout << "done." << std::endl;
 
   // Messages
-  /*
-  ignition::math::Pose3<double> forward(1,0,0,0,0,0);
-  ignition::math::Pose3<double> reverse(-1,0,0,0,0,0);
-  ignition::math::Pose3<double> stop(0,0,0,0,0,0);
-  ignition::math::Pose3<double> turn;
-  */
-  gazebo::msgs::Pose msg = new gazebo::msgs::Pose();
+  ignition::math::Pose3d forward(1,0,0,0,0,0);
+  ignition::math::Pose3d reverse(-1,0,0,0,0,0);
+  ignition::math::Pose3d stop(0,0,0,0,0,0);
+  ignition::math::Pose3d forwardL(1,0,0,0,0,3.0);
+  ignition::math::Pose3d reverseL(-1,0,0,0,0,3.0);
+  ignition::math::Pose3d stopL(0,0,0,0,0,3.0);
+  ignition::math::Pose3d turn;
+  gazebo::msgs::Pose msg;
   int cmd_id, round_arg;
   bool timed_cmd_executing;
   double cmd_arg;
@@ -379,34 +383,40 @@ int main(int _argc, char **_argv)
     if(cmd_id > 0){
       switch(cmd_id){
       case FORWARD_CMD:
-	//gazebo::msgs::Set(&msg, forward);
-		  msg->Set(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-	break;
+        msg = gazebo::msgs::Convert(forward);
+        //gazebo::msgs::Set(&msg, forward);
+        //msg->Set(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        break;
       case REVERSE_CMD:
-	//gazebo::msgs::Set(&msg, reverse);
-		  msg->Set(-1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-	break;
+        msg = gazebo::msgs::Convert(reverse);
+        //gazebo::msgs::Set(&msg, reverse);
+        //msg->Set(-1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    break;
       case STOP_CMD:
-	//gazebo::msgs::Set(&msg, stop);
-		  msg->Set(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-	break;
+        msg = gazebo::msgs::Convert(stop);
+        //gazebo::msgs::Set(&msg, stop);
+        //msg->Set(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        break;
       case TURN_L_CMD:
       case TURN_R_CMD:
-	//turn.Set(0,0,0,0,0,TURN_ARG_SCALE_FACTOR*cmd_arg);
-	//gazebo::msgs::Set(&msg, turn);
-		  msg->Set(0.0, 0.0, 0.0, 0.0, 0.0, TURN_ARG_SCALE_FACTOR*cmd_arg);
-	break;
+        //gazebo::msgs::Set(&msg, ignition::math::Pose3d(ignition::math::Vector3d(0,0,0), ignition::math::Quaterniond(0,0,TURN_ARG_SCALE_FACTOR*cmd_arg)));
+        msg = gazebo::msgs::Convert(ignition::math::Pose3d(ignition::math::Vector3d(0,0,0), ignition::math::Quaterniond(0,0,TURN_ARG_SCALE_FACTOR*cmd_arg)));
+        //gazebo::msgs::Set(&msg, turn);
+        //msg->Set(0.0, 0.0, 0.0, 0.0, 0.0, TURN_ARG_SCALE_FACTOR*cmd_arg);
+        break;
       case FORWARD_L_CMD:
       case FORWARD_R_CMD:
-	//turn.Set(1,0,0,0,0,TURN_ARG_SCALE_FACTOR*cmd_arg);
-	//gazebo::msgs::Set(&msg, turn);
-		  msg->Set(1.0, 0.0, 0.0, 0.0, 0.0, TURN_ARG_SCALE_FACTOR*cmd_arg);
+        turn.Set(1,0,0,0,0,TURN_ARG_SCALE_FACTOR*cmd_arg);
+        msg = gazebo::msgs::Convert(forwardL);
+        //gazebo::msgs::Set(&msg, turn);
+        //msg->Set(1.0, 0.0, 0.0, 0.0, 0.0, TURN_ARG_SCALE_FACTOR*cmd_arg);
 	break;
       case REVERSE_L_CMD:
       case REVERSE_R_CMD:
-	//turn.Set(-1,0,0,0,0,TURN_ARG_SCALE_FACTOR*cmd_arg);
-	//gazebo::msgs::Set(&msg, turn);
-		  msg->Set(-1.0, 0.0, 0.0, 0.0, 0.0, TURN_ARG_SCALE_FACTOR*cmd_arg);
+        turn.Set(-1,0,0,0,0,TURN_ARG_SCALE_FACTOR*cmd_arg);
+        msg = gazebo::msgs::Convert(forwardL);
+        //gazebo::msgs::Set(&msg, turn);
+        //msg->Set(-1.0, 0.0, 0.0, 0.0, 0.0, TURN_ARG_SCALE_FACTOR*cmd_arg);
 	break;
       default:
 	std::cout << "Unknown command ID: " << cmd_id << std::endl;
