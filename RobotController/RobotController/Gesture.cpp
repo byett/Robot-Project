@@ -124,16 +124,16 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		turncount++;
 		if (rh.x == lh.x) {
 			if (lh.y > rh.y) {
-				result -= 90;
+				result -= PI / 2;
 				//result += 90;
 			}
 			else {
-				result += 90;
+				result += PI / 2;
 				//result += -90;
 			}
 		}
 		else if (rh.x>lh.x) {
-			result += atan((rh.y - lh.y) / (rh.x - lh.x)) * 180 / PI;
+			result += atan((rh.y - lh.y) / (rh.x - lh.x));
 			//result += atan((lh.y - rh.y) / (rh.x - lh.x)) * 180 / PI;
 		}
 		if (turncount == 10) {
