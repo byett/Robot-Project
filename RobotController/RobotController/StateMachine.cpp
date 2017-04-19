@@ -13,8 +13,8 @@
 StateMachine::StateMachine()
 {
 	/* Initial FSM State */
-	currentState = AUTO_FORWARD_STATE;
-	machineMode = AUTO_MODE;
+	currentState = STOP_STATE;
+	machineMode = MANUAL_MODE;
 	outputCmd = NULL_CMD;
 	outputArg = 0.0;
 	tickCount = 0;

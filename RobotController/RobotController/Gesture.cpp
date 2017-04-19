@@ -153,8 +153,8 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		else if (rh.x>lh.x) {
 			result += atan((rh.y - lh.y) / (rh.x - lh.x));
 		}
-		if (turncount == 5) {
-			user_arg = result / 5;
+		if (turncount == 1) {
+			user_arg = result / 1;
 			if(user_arg < 0) user_input |= TURN_R_CMD_MASK;
 			else user_input |= TURN_L_CMD_MASK;
 			clearall();
