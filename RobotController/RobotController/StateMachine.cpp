@@ -13,9 +13,10 @@
 StateMachine::StateMachine()
 {
 	/* Initial FSM State */
-	currentState = STOP_STATE;
-	machineMode = MANUAL_MODE;
+	currentState = AUTO_FORWARD_STATE;
+	machineMode = AUTO_MODE;
 	outputCmd = NULL_CMD;
+	outputArg = 0.0;
 	tickCount = 0;
 }
 
@@ -24,9 +25,10 @@ int StateMachine::getCurrentState()
 	return currentState;
 }
 
-void StateMachine::setInput(uint16_t input)
+void StateMachine::setInput(uint16_t input, double arg)
 {
 	externalInput = input;
+	inputArg = arg;
 }
 
 int StateMachine::getOutputCmd()
@@ -35,6 +37,16 @@ int StateMachine::getOutputCmd()
 
 	temp = outputCmd;
 	outputCmd = NULL_CMD;
+
+	return temp;
+}
+
+double StateMachine::getOutputArg()
+{
+	double temp;
+
+	temp = outputArg;
+	outputArg = 0.0;
 
 	return temp;
 }
@@ -49,6 +61,7 @@ int StateMachine::stepMachine()
 
 	tickCount++;
 	outputCmd = NULL_CMD;
+	outputArg = inputArg;
 
 	switch (machineMode) {
 	/* Manual Mode */
@@ -137,7 +150,7 @@ int StateMachine::stepMachine()
 					currentState = STOP_STATE;
 					outputCmd = STOP_CMD;
 				}
-				else if (externalInput & TURN_R_CMD) {
+				else if (externalInput & TURN_R_CMD_MASK) {
 					currentState = STOP_R_STATE;
 					outputCmd = TURN_R_CMD;
 				}
@@ -148,7 +161,7 @@ int StateMachine::stepMachine()
 					currentState = STOP_STATE;
 					outputCmd = STOP_CMD;
 				}
-				else if (externalInput & TURN_L_CMD) {
+				else if (externalInput & TURN_L_CMD_MASK) {
 					currentState = STOP_L_STATE;
 					outputCmd = TURN_L_CMD;
 				}
@@ -170,7 +183,7 @@ int StateMachine::stepMachine()
 					currentState = FORWARD_STATE;
 					outputCmd = FORWARD_CMD;
 				}
-				else if (externalInput & TURN_R_CMD) {
+				else if (externalInput & TURN_R_CMD_MASK) {
 					currentState = FORWARD_R_STATE;
 					outputCmd = FORWARD_R_CMD;
 				}
@@ -181,7 +194,7 @@ int StateMachine::stepMachine()
 					currentState = FORWARD_STATE;
 					outputCmd = FORWARD_CMD;
 				}
-				else if (externalInput & TURN_L_CMD) {
+				else if (externalInput & TURN_L_CMD_MASK) {
 					currentState = FORWARD_L_STATE;
 					outputCmd = FORWARD_L_CMD;
 				}
@@ -249,14 +262,14 @@ int StateMachine::stepMachine()
 			case AUTO_REVERSE_STATE:
 				if (tickCount >= AUTO_AVOIDANCE_REVERSE_DELAY_TICKS ) {
 					if (left_sensor_tripped) {
-						currentState = AUTO_TURN_L_STATE;
-						outputCmd = TURN_L_CMD;
+						currentState = AUTO_TURN_R_STATE;
+						outputCmd = TURN_R_CMD;
 						left_sensor_tripped = false;
 					}
 					else
 					{
-						currentState = AUTO_TURN_R_STATE;
-						outputCmd = TURN_R_CMD;
+						currentState = AUTO_TURN_L_STATE;
+						outputCmd = TURN_L_CMD;
 					}
 					tickCount = 0;
 				}

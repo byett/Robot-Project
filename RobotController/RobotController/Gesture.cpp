@@ -64,6 +64,7 @@ double Gesture::getUserArg()
 void Gesture::ProcessSkeleton()
 {
 	NUI_SKELETON_FRAME skeletonFrame = { 0 };
+	int i;
 
 	HRESULT hr = m_pNuiSensor->NuiSkeletonGetNextFrame(0, &skeletonFrame);
 	if (FAILED(hr))
@@ -72,10 +73,16 @@ void Gesture::ProcessSkeleton()
 		return;
 	}
 
-	// smooth out the skeleton data
+	/* smooth out the skeleton data */
 	m_pNuiSensor->NuiTransformSmooth(&skeletonFrame, NULL);
 
-	this->determine_gesture(skeletonFrame.SkeletonData[0]);
+	/* Look if Kinect is currently tracking any skeletons. 6 is maximum number of skeletons Kinect will track. Take first available and stop. */
+	for (i = 0; i < 6; i++){
+		if (skeletonFrame.SkeletonData[i].eTrackingState == NUI_SKELETON_TRACKED){
+			this->determine_gesture(skeletonFrame.SkeletonData[i]);
+			break;
+		}
+	}
 }
 
 /// <summary>
@@ -83,6 +90,10 @@ void Gesture::ProcessSkeleton()
 /// </summary>
 void Gesture::Update()
 {
+	/* Clear any previous user_input and user_arg */
+	user_input = NULL_CMD_MASK;
+	user_arg = 0.0;
+
 	if (NULL == m_pNuiSensor)
 	{
 		return;
@@ -105,10 +116,6 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 	const Vector4& le = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_LEFT];
 	const Vector4& rhip = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_RIGHT];
 	const Vector4& lhip = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_LEFT];
-	
-	/* Clear any previous user_input and user_arg */
-	user_input = NULL_CMD_MASK;
-	user_arg = 0.0;
 
 	/* Determine gesture and set user_input and user_arg as appropriate */
 	if (rh.y>(rhip.y + 0) && lh.y>(lhip.y + 0) && rh.y != lh.y) {
@@ -138,7 +145,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		}
 		if (turncount == 10) {
 			user_arg = result / 10;
-			if(user_arg > 0) user_input |= TURN_R_CMD_MASK;
+			if(user_arg < 0) user_input |= TURN_R_CMD_MASK;
 			else user_input |= TURN_L_CMD_MASK;
 			clearall();
 		}

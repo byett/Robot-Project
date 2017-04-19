@@ -37,7 +37,7 @@
 
 #define STATE_MACHINE_TICK_TIME_MS				20	
 #define AUTO_AVOIDANCE_REVERSE_DELAY_TICKS		25
-#define AUTO_AVOIDANCE_TURN_DELAY_TICKS			25
+#define AUTO_AVOIDANCE_TURN_DELAY_TICKS			50
 
 public class StateMachine 
 {
@@ -45,8 +45,9 @@ public:
 	/* Public Functions */
 	StateMachine();
 	int getCurrentState();
-	void setInput(uint16_t input);
+	void setInput(uint16_t input, double arg);
 	int getOutputCmd();
+	double getOutputArg();
 	int stepMachine();
 
 	/* Public Variables */
@@ -58,6 +59,8 @@ private:
 	int currentState;
 	int machineMode;
 	int outputCmd;
+	double inputArg;
+	double outputArg;
 	int tickCount;
 	bool left_sensor_tripped;
 	uint16_t externalInput;

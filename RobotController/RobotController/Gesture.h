@@ -14,6 +14,10 @@
 #include <windows.h>
 #include <NuiApi.h>
 
+/* Gesture Turning parameters */
+#define GESTURE_MAX_TURN_L PI/2
+#define GESTURE_MAX_TURN_R -PI/2
+
 public class Gesture
 {
 public:

@@ -48,6 +48,7 @@ DWORD WINAPI listenThreadFunction(LPVOID lpParam);
 int shutdownThread(HANDLE thread, threadSharedItems *t_items);
 uint16_t DEBUG_GetUserInputCMDLine();
 void DEBUG_PrintUserCMD(uint16_t input);
+void DEBUG_PrintCMD(int cmd_id, double cmd_arg);
 
 
 int main(/*array<System::String ^> ^args*/)
@@ -162,16 +163,18 @@ int main(/*array<System::String ^> ^args*/)
 		if (gestureShared->new_msg == TRUE) {
 			machineInput |= ((gestureData*)(gestureShared->msg_p))->user_cmd;
 			turn_angle = ((gestureData*)(gestureShared->msg_p))->arg;
+			((gestureData*)(gestureShared->msg_p))->user_cmd = NULL_CMD;
+			((gestureData*)(gestureShared->msg_p))->arg = 0.0;
 		}
 		gestureShared->new_msg = FALSE;
 		ReleaseMutex(gestureShared->mutex);
 
 		/* DEBUG */
-		if ((machineInput != STOP_TURN_CMD_MASK) && (machineInput != NULL_CMD_MASK))
+		if (machineInput & (STOP_CMD_MASK | FORWARD_CMD_MASK | REVERSE_CMD_MASK | TURN_L_CMD_MASK | TURN_R_CMD_MASK | MANUAL_MODE_CMD_MASK | AUTO_MODE_CMD_MASK))
 			DEBUG_PrintUserCMD(machineInput);
 
 		/* Send input to FSM, step, and get output */
-		FSM->setInput(machineInput);
+		FSM->setInput(machineInput, turn_angle);
 		FSM->stepMachine();
 		cmd_id = FSM->getOutputCmd();
 		machineInput = NULL_CMD_MASK;
@@ -181,19 +184,23 @@ int main(/*array<System::String ^> ^args*/)
 		printf("cmd: %d\tstate: %d\n", cmd_id, machineInput);
 		machineInput = NULL_CMD_MASK;*/
 
+		/* DEBUG */
+		if (cmd_id != NULL_CMD)
+			DEBUG_PrintCMD(cmd_id, turn_angle);
+
 		/* Send command and argument (as applicable) to gazeboInterface */
-		memcpy(&buf[0], &cmd_id, sizeof(cmd_id));
-		if ((cmd_id == TURN_L_CMD) || (cmd_id == TURN_R_CMD) ||
-			(cmd_id == FORWARD_L_CMD) || (cmd_id == FORWARD_R_CMD) ||
-			(cmd_id == REVERSE_L_CMD) || (cmd_id == REVERSE_R_CMD))
-		{
+		if (cmd_id != NULL_CMD){
+			memcpy(&buf[0], &cmd_id, sizeof(cmd_id));
+			if ((FSM->getCurrentState()) == AUTO_TURN_L_STATE){
+				turn_angle = GESTURE_MAX_TURN_L;
+			}
+			else if ((FSM->getCurrentState()) == AUTO_TURN_R_STATE){
+				turn_angle = GESTURE_MAX_TURN_R;
+			}
 			memcpy(&buf[sizeof(cmd_id)], &turn_angle, sizeof(turn_angle));
-		}
-		else{
-			memset(&buf[sizeof(cmd_id)], 0x00, sizeof(double));
-		}
-		if (TCP_Socket->Send(buf, sizeof(buf)) == -1) {
-			printf("TCP Send error.\n");
+			if (TCP_Socket->Send(buf, sizeof(buf)) == -1) {
+				printf("TCP Send error.\n");
+			}
 		}
 	}
 
@@ -410,6 +417,51 @@ void DEBUG_PrintUserCMD(uint16_t input)
 		printf("\tAUTO MODE\n");
 	if (input & MANUAL_MODE_CMD_MASK)
 		printf("\tMANUAL MODE\n");
+
+	printf("\n");
+}
+
+void DEBUG_PrintCMD(int cmd_id, double cmd_arg)
+{
+	printf("Sending Command:\t");
+	switch (cmd_id){
+	case STOP_CMD:
+		printf("STOP\n");
+		break;
+	case FORWARD_CMD:
+		printf("FORWARD\n");
+		break;
+	case REVERSE_CMD:
+		printf("REVERSE\n");
+		break;
+	case TURN_L_CMD:
+		printf("TURN_L\t turn_angle: %f\n", cmd_arg);
+		break;
+	case TURN_R_CMD:
+		printf("TURN_R\t turn_angle: %f\n", cmd_arg);
+		break;
+	case FORWARD_L_CMD:
+		printf("FORWARD_L\t turn_angle: %f\n", cmd_arg);
+		break;
+	case FORWARD_R_CMD:
+		printf("FORWARD_R\t turn_angle: %f\n", cmd_arg);
+		break;
+	case REVERSE_L_CMD:
+		printf("REVERSE_L\t turn_angle: %f\n", cmd_arg);
+		break;
+	case REVERSE_R_CMD:
+		printf("REVERSE_R\t turn_angle: %f\n", cmd_arg);
+		break;
+	case AUTO_MODE_CMD:
+		printf("AUTO_MODE\n");
+		break;
+	case MANUAL_MODE_CMD:
+		printf("MANUAL_MODE\n");
+		break;
+	default:
+		printf("ERROR: RobotContoller DEBUG_PrintCMD Unknown command ID.\n");
+		break;
+	}
 
 	printf("\n");
 }

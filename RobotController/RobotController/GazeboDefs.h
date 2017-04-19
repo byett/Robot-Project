@@ -27,6 +27,7 @@
 #define MANUAL_MODE_CMD		0xBA
 #define AUTO_MODE_CMD		0xBB
 
+/* Gazebo Message sizes*/
 #define GAZEBO_DATA_MSG_SIZE	sizeof(int) + sizeof(double)
 #define	GAZEBO_CMD_MSG_SIZE		sizeof(int) + sizeof(double)
 
