@@ -118,7 +118,20 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 	const Vector4& lhip = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_LEFT];
 
 	/* Determine gesture and set user_input and user_arg as appropriate */
-	if (rh.y>(rhip.y + 0) && lh.y>(lhip.y + 0) && rh.y != lh.y) {
+	if (rh.y < rhip.y) {
+		mana = 0;
+		manb = 0;
+		stop = 0;
+		turncount = 0;
+		result = 0;
+	}
+	if (lh.y < lhip.y) {
+		autoa = 0;
+		autob = 0;
+		turncount = 0;
+		result = 0;
+	}
+	if (rh.y > rhip.y && lh.y > lhip.y && rh.y != lh.y) {
 		backwarda = 0;
 		backwardb = 0;
 		forwarda = 0;
@@ -132,19 +145,16 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		if (rh.x == lh.x) {
 			if (lh.y > rh.y) {
 				result -= PI / 2;
-				//result += 90;
 			}
 			else {
 				result += PI / 2;
-				//result += -90;
 			}
 		}
 		else if (rh.x>lh.x) {
 			result += atan((rh.y - lh.y) / (rh.x - lh.x));
-			//result += atan((lh.y - rh.y) / (rh.x - lh.x)) * 180 / PI;
 		}
-		if (turncount == 10) {
-			user_arg = result / 10;
+		if (turncount == 5) {
+			user_arg = result / 5;
 			if(user_arg < 0) user_input |= TURN_R_CMD_MASK;
 			else user_input |= TURN_L_CMD_MASK;
 			clearall();
@@ -155,12 +165,10 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		backwarda = 0;
 		backwardb = 0;
 		if (stop == 5) {
-		//if (stop == 10) {
 			clearall();
 			user_input |= STOP_CMD_MASK;
 		}
 		else if (stop <= 4) {
-		//else if (stop <= 9) {
 			stop++;
 		}
 	}
@@ -186,8 +194,6 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 	if (lh.y < le.y && backwarda > 0) {
 		forwarda = 0;
 		forwardb = 0;
-		//autoa = 0;
-		//autob = 0;
 		if (backwarda == 2) {
 			user_input |= REVERSE_CMD_MASK;
 			clearall();
@@ -204,7 +210,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 			backwarda = 1;
 		}
 	}
-	if (lh.x > le.x && autoa > 0 && lh.y>lhip.y) {
+	if (lh.x > le.x && autoa > 0 && lh.y > le.y) {
 		mana = 0;
 		manb = 0;
 		if (autoa == 2) {
@@ -215,7 +221,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 			autob = 1;
 		}
 	}
-	else if (lh.x < le.x && lh.y>lhip.y) {
+	else if (lh.x < le.x && lh.y > le.y) {
 		if (autob == 1) {
 			autoa = 2;
 		}
@@ -223,7 +229,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 			autoa = 1;
 		}
 	}
-	if (rh.x < re.x && mana > 0 && rh.y>rhip.y) {
+	if (rh.x < re.x && mana > 0 && rh.y > re.y) {
 		autoa = 0;
 		autob = 0;
 		if (mana == 2) {
@@ -234,7 +240,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 			manb = 1;
 		}
 	}
-	else if (rh.x > re.x && rh.y>rhip.y) {
+	else if (rh.x > re.x && rh.y > re.y) {
 		if (manb == 1) {
 			mana = 2;
 		}
