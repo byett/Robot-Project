@@ -118,6 +118,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 	const Vector4& lhip = skeleton.SkeletonPositions[NUI_SKELETON_POSITION_HIP_LEFT];
 
 	/* Determine gesture and set user_input and user_arg as appropriate */
+	// Following 2 if loops allow us to reset variables when that arm is not in use, prevents unexpected results
 	if (rh.y < rhip.y) {
 		mana = 0;
 		manb = 0;
@@ -131,6 +132,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 		turncount = 0;
 		result = 0;
 	}
+	// When hands are both above hips, recognized as a turn, returns angle measurement based on hand placement every frame
 	if (rh.y > rhip.y && lh.y > lhip.y && rh.y != lh.y) {
 		backwarda = 0;
 		backwardb = 0;
@@ -160,7 +162,9 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 			clearall();
 		}
 	}
+	// Used to prevent turning from occuring continuously
 	else user_input |= STOP_TURN_CMD_MASK;
+	// When the user's right hand is 0.15m above the right shoulder for 5 frames, return the stop command
 	if (rh.y > (rs.y + 0.15)) {
 		backwarda = 0;
 		backwardb = 0;
@@ -172,6 +176,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 			stop++;
 		}
 	}
+	// After 2 motions with the right hand calling the robot towards you, returns the forward command
 	if (rh.y > re.y && forwarda > 0) {
 		backwarda = 0;
 		backwardb = 0;
@@ -191,6 +196,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 			forwarda = 1;
 		}
 	}
+	// After 2 motions with the left hand sending the robot away, returns the backward command
 	if (lh.y < le.y && backwarda > 0) {
 		forwarda = 0;
 		forwardb = 0;
@@ -210,6 +216,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 			backwarda = 1;
 		}
 	}
+	// After 2 waves of the left hand, returns the auto command
 	if (lh.x > le.x && autoa > 0 && lh.y > le.y) {
 		mana = 0;
 		manb = 0;
@@ -229,6 +236,7 @@ void Gesture::determine_gesture(const NUI_SKELETON_DATA & skeleton)
 			autoa = 1;
 		}
 	}
+	// After 2 waves of the right hand, returns the manual command
 	if (rh.x < re.x && mana > 0 && rh.y > re.y) {
 		autoa = 0;
 		autob = 0;
