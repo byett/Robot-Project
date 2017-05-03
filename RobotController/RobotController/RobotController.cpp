@@ -169,9 +169,10 @@ int main(/*array<System::String ^> ^args*/)
 		gestureShared->new_msg = FALSE;
 		ReleaseMutex(gestureShared->mutex);
 
-		/* DEBUG */
+		/************ DEBUG *************
 		if (machineInput & (STOP_CMD_MASK | FORWARD_CMD_MASK | REVERSE_CMD_MASK | TURN_L_CMD_MASK | TURN_R_CMD_MASK | MANUAL_MODE_CMD_MASK | AUTO_MODE_CMD_MASK))
 			DEBUG_PrintUserCMD(machineInput);
+		*/
 
 		/* Send input to FSM, step, and get output */
 		FSM->setInput(machineInput, turn_angle);
@@ -179,14 +180,15 @@ int main(/*array<System::String ^> ^args*/)
 		cmd_id = FSM->getOutputCmd();
 		machineInput = NULL_CMD_MASK;
 
-		/* DEBUG 
+		/************ DEBUG *************
 		machineInput = FSM->getCurrentState();
 		printf("cmd: %d\tstate: %d\n", cmd_id, machineInput);
 		machineInput = NULL_CMD_MASK;*/
 
-		/* DEBUG */
+		/************ DEBUG *************
 		if (cmd_id != NULL_CMD)
 			DEBUG_PrintCMD(cmd_id, turn_angle);
+		*/
 
 		/* Send command and argument (as applicable) to gazeboInterface */
 		if (cmd_id != NULL_CMD){
